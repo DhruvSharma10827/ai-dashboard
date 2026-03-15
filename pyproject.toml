@@ -168,7 +168,6 @@ ignore = [
 
 [tool.ruff.lint.isort]
 known-first-party = ["dashboard"]
-force-single-line = true
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

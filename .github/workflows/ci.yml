@@ -44,20 +44,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      # Ruff - Fast Linter (replaces flake8, isort, pydocstyle, etc.)
+      # Ruff - Fast Linter and Formatter (replaces flake8, isort, black, pydocstyle, etc.)
       - name: Run Ruff (Linting)
         run: ruff check . --output-format=github
 
       - name: Run Ruff (Format Check)
         run: ruff format --check .
-
-      # Black - Code Formatting
-      - name: Run Black (Format Check)
-        run: black --check .
-
-      # isort - Import Sorting
-      - name: Run isort (Import Check)
-        run: isort --check-only --diff .
 
       # MyPy - Static Type Checking
       - name: Run MyPy (Type Checking)

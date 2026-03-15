@@ -426,12 +426,8 @@ class LoginScreen(Screen):
             if self._is_setup:
                 yield Static("\n🔐 First Time Setup", classes="card-header")
                 yield Static("Create an admin password:")
-                yield Input(
-                    placeholder="Enter password", password=True, id="setup-password"
-                )
-                yield Input(
-                    placeholder="Confirm password", password=True, id="setup-confirm"
-                )
+                yield Input(placeholder="Enter password", password=True, id="setup-password")
+                yield Input(placeholder="Confirm password", password=True, id="setup-confirm")
             else:
                 yield Static("\n🔐 Authentication Required", classes="card-header")
                 yield Static("Enter your admin password:")
@@ -463,9 +459,7 @@ class LoginScreen(Screen):
                 self.query_one("#error-msg", Static).update("❌ Password required")
                 return
             if pwd != confirm:
-                self.query_one("#error-msg", Static).update(
-                    "❌ Passwords don't match"
-                )
+                self.query_one("#error-msg", Static).update("❌ Passwords don't match")
                 return
             ph = argon2.PasswordHasher()
             self.config.admin_password_hash = ph.hash(pwd)
@@ -606,9 +600,7 @@ class ModelsScreen(Screen):
 
                 with Container(classes="card"):
                     yield Static("🟢 Claude (Anthropic)", classes="card-header")
-                    yield Static(
-                        "Model: claude-3-opus | API Key: ✓ Set | Usage: $0.45"
-                    )
+                    yield Static("Model: claude-3-opus | API Key: ✓ Set | Usage: $0.45")
                     yield Button("Configure", variant="primary")
 
                 with Container(classes="card"):
@@ -668,9 +660,7 @@ class ChatScreen(Screen):
 
         with Container(classes="chat-container"):
             yield Static("💬 Chat Interface", classes="card-header")
-            yield Static(
-                "Model: Claude 3 Opus | Context: 8K / 200K", id="chat-info"
-            )
+            yield Static("Model: Claude 3 Opus | Context: 8K / 200K", id="chat-info")
 
             with VerticalScroll(classes="chat-messages", id="messages"):
                 yield Static("Welcome to AI Dashboard Chat!")
@@ -824,30 +814,9 @@ class AIDashboardApp(App):
 
         # Initialize data
         self.models = [
-            AIModel(
-                "ollama-llama3.2",
-                "Llama 3.2",
-                "ollama",
-                "chat",
-                "running",
-                128000,
-            ),
-            AIModel(
-                "ollama-mistral",
-                "Mistral",
-                "ollama",
-                "chat",
-                "running",
-                32000,
-            ),
-            AIModel(
-                "ollama-codellama",
-                "CodeLlama",
-                "ollama",
-                "chat",
-                "available",
-                16384,
-            ),
+            AIModel("ollama-llama3.2", "Llama 3.2", "ollama", "chat", "running", 128000),
+            AIModel("ollama-mistral", "Mistral", "ollama", "chat", "running", 32000),
+            AIModel("ollama-codellama", "CodeLlama", "ollama", "chat", "available", 16384),
             AIModel(
                 "openai-gpt4",
                 "GPT-4 Turbo",
@@ -872,23 +841,9 @@ class AIDashboardApp(App):
 
         self.agents = [
             Agent("code", "Code Agent", "code", "idle", 12, "codellama"),
-            Agent(
-                "research",
-                "Research Agent",
-                "research",
-                "running",
-                3,
-                "llama3.2",
-            ),
+            Agent("research", "Research Agent", "research", "running", 3, "llama3.2"),
             Agent("task", "Task Agent", "task", "idle", 5, "llama3.2"),
-            Agent(
-                "chat",
-                "Chat Agent",
-                "chat",
-                "running",
-                8,
-                "claude-3-opus",
-            ),
+            Agent("chat", "Chat Agent", "chat", "running", 8, "claude-3-opus"),
         ]
 
         self.tasks: list[Task] = []
