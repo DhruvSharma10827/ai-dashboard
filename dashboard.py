@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""
-AI Dashboard - Enterprise AI Orchestration System
-A professional TUI for managing AI models, agents, and workflows
+"""AI Dashboard - Enterprise AI Orchestration System.
+
+A professional TUI for managing AI models, agents, and workflows.
 """
 
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -16,8 +15,15 @@ from textual.containers import Container, Horizontal, VerticalScroll
 from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import (
-    Button, Footer, Header, Label, ListItem, ListView, ProgressBar,
-    Static, TabbedContent, TabPane, TextArea, Input, DataTable
+    Button,
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    ListItem,
+    Static,
+    TabbedContent,
+    TabPane,
 )
 
 
@@ -67,7 +73,7 @@ class Config:
     ssh_enabled: bool = True
     ssh_port: int = 2222
     default_provider: str = "ollama"
-    api_keys: Dict[str, str] = field(default_factory=dict)
+    api_keys: dict[str, str] = field(default_factory=dict)
     
     def save(self):
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -788,7 +794,7 @@ class AIDashboardApp(App):
             Agent("chat", "Chat Agent", "chat", "running", 8, "claude-3-opus"),
         ]
         
-        self.tasks: List[Task] = []
+        self.tasks: list[Task] = []
     
     def on_mount(self) -> None:
         if not self.config.admin_password_hash:
