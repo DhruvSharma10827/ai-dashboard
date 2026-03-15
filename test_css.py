@@ -32,10 +32,11 @@ def test_css_validation() -> int:
 
     try:
         # Create an instance - this validates CSS variables
-        app = AIDashboardApp()
+        AIDashboardApp()
 
         # Check if CSS was parsed without errors
-        if app.css:
+        # Textual apps store CSS in the CSS class attribute
+        if AIDashboardApp.CSS:
             print("✅ CSS parsed successfully")
             return 0
     except Exception as e:
