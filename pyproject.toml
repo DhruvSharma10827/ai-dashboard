@@ -156,6 +156,10 @@ ignore = [
     "TD002", "TD003",
     # Allow print statements in CLI apps
     "T201",
+    # Allow nested with statements (required for Textual UI composition)
+    "SIM117",
+    # Allow import sorting handled by isort
+    "I001",
 ]
 
 [tool.ruff.lint.per-file-ignores]

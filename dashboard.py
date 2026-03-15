@@ -8,7 +8,9 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import ClassVar
 
+import argon2
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, VerticalScroll
@@ -16,7 +18,6 @@ from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import (
     Button,
-    DataTable,
     Footer,
     Header,
     Input,
@@ -25,7 +26,6 @@ from textual.widgets import (
     TabbedContent,
     TabPane,
 )
-
 
 # =============================================================================
 # CONFIGURATION
@@ -37,6 +37,8 @@ CONFIG_FILE = CONFIG_DIR / "config.json"
 
 @dataclass
 class AIModel:
+    """AI Model configuration and metadata."""
+
     id: str
     name: str
     provider: str
@@ -49,6 +51,8 @@ class AIModel:
 
 @dataclass
 class Agent:
+    """Agent configuration and task tracking."""
+
     id: str
     name: str
     role: str
@@ -59,6 +63,8 @@ class Agent:
 
 @dataclass
 class Task:
+    """Task definition and status tracking."""
+
     id: str
     description: str
     status: str = "pending"
@@ -68,27 +74,35 @@ class Task:
 
 @dataclass
 class Config:
+    """Application configuration settings."""
+
     admin_password_hash: str = ""
     encryption_key: str = ""
     ssh_enabled: bool = True
     ssh_port: int = 2222
     default_provider: str = "ollama"
     api_keys: dict[str, str] = field(default_factory=dict)
-    
-    def save(self):
+
+    def save(self) -> None:
+        """Save configuration to disk."""
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
         with open(CONFIG_FILE, "w") as f:
-            json.dump({
-                "admin_password_hash": self.admin_password_hash,
-                "encryption_key": self.encryption_key,
-                "ssh_enabled": self.ssh_enabled,
-                "ssh_port": self.ssh_port,
-                "default_provider": self.default_provider,
-                "api_keys": self.api_keys,
-            }, f, indent=2)
-    
+            json.dump(
+                {
+                    "admin_password_hash": self.admin_password_hash,
+                    "encryption_key": self.encryption_key,
+                    "ssh_enabled": self.ssh_enabled,
+                    "ssh_port": self.ssh_port,
+                    "default_provider": self.default_provider,
+                    "api_keys": self.api_keys,
+                },
+                f,
+                indent=2,
+            )
+
     @classmethod
     def load(cls) -> "Config":
+        """Load configuration from disk or return defaults."""
         if CONFIG_FILE.exists():
             with open(CONFIG_FILE) as f:
                 data = json.load(f)
@@ -282,20 +296,9 @@ Input {
     margin: 1 0;
 }
 
-/* DataTable */
-DataTable {
-    height: 1fr;
-}
-
 /* Tabs */
 TabbedContent {
     height: 1fr;
-}
-
-/* Progress bar */
-ProgressBar {
-    height: 1;
-    margin: 1 0;
 }
 """
 
@@ -304,14 +307,16 @@ ProgressBar {
 # WIDGETS
 # =============================================================================
 
+
 class StatusIndicator(Static):
-    """Status indicator widget"""
-    
+    """Status indicator widget."""
+
     def __init__(self, status: str, **kwargs):
         super().__init__(**kwargs)
         self.status = status
-    
+
     def compose(self) -> ComposeResult:
+        """Generate child widgets for the status indicator."""
         icons = {
             "online": "🟢",
             "offline": "🔴",
@@ -324,14 +329,15 @@ class StatusIndicator(Static):
 
 
 class ModelCard(Container):
-    """AI Model card widget"""
-    
+    """AI Model card widget."""
+
     def __init__(self, model: AIModel, **kwargs):
         super().__init__(**kwargs)
         self.model = model
         self.add_class(model.status)
-    
+
     def compose(self) -> ComposeResult:
+        """Generate child widgets for the model card."""
         with Horizontal(classes="model-header"):
             yield Static(f"🤖 {self.model.name}", classes="model-name")
             yield StatusIndicator(self.model.status)
@@ -346,14 +352,15 @@ class ModelCard(Container):
 
 
 class AgentCard(Container):
-    """Agent card widget"""
-    
+    """Agent card widget."""
+
     def __init__(self, agent: Agent, **kwargs):
         super().__init__(**kwargs)
         self.agent = agent
         self.add_class(agent.status)
-    
+
     def compose(self) -> ComposeResult:
+        """Generate child widgets for the agent card."""
         icons = {
             "code": "💻",
             "research": "🔍",
@@ -370,8 +377,8 @@ class AgentCard(Container):
 
 
 class TaskItem(ListItem):
-    """Task list item"""
-    
+    """Task list item."""
+
     def __init__(self, task: Task, **kwargs):
         super().__init__(**kwargs)
         self.task = task
@@ -382,21 +389,23 @@ class TaskItem(ListItem):
 # SCREENS
 # =============================================================================
 
+
 class LoginScreen(Screen):
-    """Login screen"""
-    
+    """Login screen for authentication."""
+
     CSS_PATH = None
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("enter", "login", "Login"),
         Binding("escape", "quit", "Quit"),
     ]
-    
+
     def __init__(self, config: Config, **kwargs):
         super().__init__(**kwargs)
         self.config = config
         self._is_setup = not config.admin_password_hash
-    
+
     def compose(self) -> ComposeResult:
+        """Generate child widgets for the login screen."""
         with Container(classes="login-container"):
             yield Static(
                 """
@@ -411,31 +420,42 @@ class LoginScreen(Screen):
 ║           Enterprise AI Dashboard v1.0.0                     ║
 ╚══════════════════════════════════════════════════════════════╝
 """,
-                classes="title-text"
+                classes="title-text",
             )
-            
+
             if self._is_setup:
                 yield Static("\n🔐 First Time Setup", classes="card-header")
                 yield Static("Create an admin password:")
-                yield Input(placeholder="Enter password", password=True, id="setup-password")
-                yield Input(placeholder="Confirm password", password=True, id="setup-confirm")
+                yield Input(
+                    placeholder="Enter password", password=True, id="setup-password"
+                )
+                yield Input(
+                    placeholder="Confirm password", password=True, id="setup-confirm"
+                )
             else:
                 yield Static("\n🔐 Authentication Required", classes="card-header")
                 yield Static("Enter your admin password:")
                 yield Input(placeholder="Password", password=True, id="login-password")
-            
+
             yield Static("", id="error-msg")
-            yield Button("Login" if not self._is_setup else "Setup", variant="primary", id="login-btn")
+            yield Button(
+                "Login" if not self._is_setup else "Setup",
+                variant="primary",
+                id="login-btn",
+            )
             yield Footer()
-    
-    def action_login(self):
+
+    def action_login(self) -> None:
+        """Handle login action."""
         self._do_login()
-    
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button press events."""
         if event.button.id == "login-btn":
             self._do_login()
-    
-    def _do_login(self):
+
+    def _do_login(self) -> None:
+        """Process the login request."""
         if self._is_setup:
             pwd = self.query_one("#setup-password", Input).value
             confirm = self.query_one("#setup-confirm", Input).value
@@ -443,30 +463,29 @@ class LoginScreen(Screen):
                 self.query_one("#error-msg", Static).update("❌ Password required")
                 return
             if pwd != confirm:
-                self.query_one("#error-msg", Static).update("❌ Passwords don't match")
+                self.query_one("#error-msg", Static).update(
+                    "❌ Passwords don't match"
+                )
                 return
-            # Hash password with Argon2id
-            import argon2
             ph = argon2.PasswordHasher()
             self.config.admin_password_hash = ph.hash(pwd)
             self.config.save()
             self.app.push_screen("dashboard")
         else:
             pwd = self.query_one("#login-password", Input).value
-            import argon2
             ph = argon2.PasswordHasher()
             try:
                 ph.verify(self.config.admin_password_hash, pwd)
                 self.app.push_screen("dashboard")
-            except:
+            except argon2.exceptions.VerifyMismatchError:
                 self.query_one("#error-msg", Static).update("❌ Invalid password")
 
 
 class DashboardScreen(Screen):
-    """Main dashboard screen"""
-    
+    """Main dashboard screen."""
+
     CSS_PATH = None
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("1", "show_dashboard", "Dashboard"),
         Binding("2", "show_models", "Models"),
         Binding("3", "show_agents", "Agents"),
@@ -476,10 +495,11 @@ class DashboardScreen(Screen):
         Binding("q", "quit", "Quit"),
         Binding("?", "help", "Help"),
     ]
-    
+
     def compose(self) -> ComposeResult:
+        """Generate child widgets for the dashboard screen."""
         yield Header()
-        
+
         with Container(classes="dashboard-container"):
             # Stats bar
             with Horizontal(classes="stats-bar"):
@@ -495,7 +515,7 @@ class DashboardScreen(Screen):
                 with Container(classes="stat-box"):
                     yield Static("0", classes="stat-value")
                     yield Static("Tasks", classes="stat-label")
-            
+
             # Main content
             with Horizontal():
                 # Left panel - Models
@@ -504,14 +524,14 @@ class DashboardScreen(Screen):
                     with VerticalScroll():
                         for model in self.app.models[:5]:
                             yield ModelCard(model)
-                
+
                 # Right panel - Agents
                 with Container(classes="card", id="agents-panel"):
                     yield Static("🤖 AGENTS", classes="card-header")
                     with VerticalScroll():
                         for agent in self.app.agents:
                             yield AgentCard(agent)
-            
+
             # System status
             with Container(classes="card"):
                 yield Static("📊 SYSTEM STATUS", classes="card-header")
@@ -520,40 +540,47 @@ class DashboardScreen(Screen):
                     yield Static("MEM: ██████░░░░ 62%")
                     yield Static("GPU: ███████░░░ 45%")
                 yield Static("SSH: 🟢 Port 2222 | MCP: 🟢 Running | Cache: 256MB")
-        
+
         yield Footer()
-    
-    def action_show_dashboard(self):
+
+    def action_show_dashboard(self) -> None:
+        """Navigate to dashboard screen."""
         self.app.push_screen("dashboard")
-    
-    def action_show_models(self):
+
+    def action_show_models(self) -> None:
+        """Navigate to models screen."""
         self.app.push_screen("models")
-    
-    def action_show_agents(self):
+
+    def action_show_agents(self) -> None:
+        """Navigate to agents screen."""
         self.app.push_screen("agents")
-    
-    def action_show_chat(self):
+
+    def action_show_chat(self) -> None:
+        """Navigate to chat screen."""
         self.app.push_screen("chat")
-    
-    def action_show_tasks(self):
+
+    def action_show_tasks(self) -> None:
+        """Navigate to tasks screen."""
         self.app.push_screen("tasks")
-    
-    def action_show_settings(self):
+
+    def action_show_settings(self) -> None:
+        """Navigate to settings screen."""
         self.app.push_screen("settings")
 
 
 class ModelsScreen(Screen):
-    """AI Models management screen"""
-    
+    """AI Models management screen."""
+
     CSS_PATH = None
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("escape", "back", "Back"),
         Binding("r", "refresh", "Refresh"),
     ]
-    
+
     def compose(self) -> ComposeResult:
+        """Generate child widgets for the models screen."""
         yield Header()
-        
+
         with TabbedContent():
             with TabPane("Local Models"):
                 with Container(classes="card"):
@@ -563,101 +590,113 @@ class ModelsScreen(Screen):
                         yield Button("Start", variant="primary")
                         yield Button("Stop", variant="error")
                         yield Button("Pull Model")
-                
+
                 with Container(classes="card"):
                     yield Static("⚪ Llama.cpp (Stopped)", classes="card-header")
                     yield Static("GPU Layers: 35 | Context: 4096 | Threads: 4")
                     with Horizontal():
                         yield Button("Start", variant="primary")
                         yield Button("Configure")
-            
+
             with TabPane("Cloud Providers"):
                 with Container(classes="card"):
                     yield Static("🟢 OpenAI", classes="card-header")
                     yield Static("Model: gpt-4-turbo | API Key: ✓ Set | Usage: $1.20")
                     yield Button("Configure", variant="primary")
-                
+
                 with Container(classes="card"):
                     yield Static("🟢 Claude (Anthropic)", classes="card-header")
-                    yield Static("Model: claude-3-opus | API Key: ✓ Set | Usage: $0.45")
+                    yield Static(
+                        "Model: claude-3-opus | API Key: ✓ Set | Usage: $0.45"
+                    )
                     yield Button("Configure", variant="primary")
-                
+
                 with Container(classes="card"):
                     yield Static("🟢 Gemini (Google)", classes="card-header")
                     yield Static("Model: gemini-pro | API Key: ✓ Set | Usage: $0.10")
                     yield Button("Configure", variant="primary")
-        
+
         yield Footer()
-    
-    def action_back(self):
+
+    def action_back(self) -> None:
+        """Navigate back to previous screen."""
         self.app.pop_screen()
 
 
 class AgentsScreen(Screen):
-    """Agents management screen"""
-    
+    """Agents management screen."""
+
     CSS_PATH = None
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("escape", "back", "Back"),
         Binding("a", "add_agent", "Add Agent"),
     ]
-    
+
     def compose(self) -> ComposeResult:
+        """Generate child widgets for the agents screen."""
         yield Header()
-        
+
         with Container(classes="dashboard-container"):
             yield Static("🤖 AGENT ORCHESTRATION", classes="card-header")
             yield Static("Active: 2 | Pending: 8 | Completed Today: 15")
-            
+
             with Horizontal():
                 for agent in self.app.agents:
                     yield AgentCard(agent)
-        
+
         yield Footer()
-    
-    def action_back(self):
+
+    def action_back(self) -> None:
+        """Navigate back to previous screen."""
         self.app.pop_screen()
 
 
 class ChatScreen(Screen):
-    """Chat interface screen"""
-    
+    """Chat interface screen."""
+
     CSS_PATH = None
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("escape", "back", "Back"),
         Binding("enter", "send", "Send"),
     ]
-    
+
     messages = reactive([])
-    
+
     def compose(self) -> ComposeResult:
+        """Generate child widgets for the chat screen."""
         yield Header()
-        
+
         with Container(classes="chat-container"):
             yield Static("💬 Chat Interface", classes="card-header")
-            yield Static("Model: Claude 3 Opus | Context: 8K / 200K", id="chat-info")
-            
+            yield Static(
+                "Model: Claude 3 Opus | Context: 8K / 200K", id="chat-info"
+            )
+
             with VerticalScroll(classes="chat-messages", id="messages"):
                 yield Static("Welcome to AI Dashboard Chat!")
                 yield Static("Type a message below to start.")
-            
+
             with Horizontal(classes="chat-input"):
                 yield Input(placeholder="Type your message...", id="chat-input")
                 yield Button("Send", variant="primary", id="send-btn")
-        
+
         yield Footer()
-    
-    def action_back(self):
+
+    def action_back(self) -> None:
+        """Navigate back to previous screen."""
         self.app.pop_screen()
-    
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button press events."""
         if event.button.id == "send-btn":
             self._send_message()
-    
-    def action_send(self):
+
+    def action_send(self) -> None:
+        """Handle send action."""
         self._send_message()
-    
-    def _send_message(self):
+
+    def _send_message(self) -> None:
+        """Process and send the chat message."""
         inp = self.query_one("#chat-input", Input)
         msg = inp.value
         if msg:
@@ -668,17 +707,18 @@ class ChatScreen(Screen):
 
 
 class TasksScreen(Screen):
-    """Tasks management screen"""
-    
+    """Tasks management screen."""
+
     CSS_PATH = None
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("escape", "back", "Back"),
         Binding("n", "new_task", "New Task"),
     ]
-    
+
     def compose(self) -> ComposeResult:
+        """Generate child widgets for the tasks screen."""
         yield Header()
-        
+
         with Container(classes="dashboard-container"):
             yield Static("📋 TASK MANAGEMENT", classes="card-header")
             with Horizontal():
@@ -686,37 +726,39 @@ class TasksScreen(Screen):
                 yield Button("Schedule")
                 yield Button("Templates")
                 yield Button("History")
-            
+
             with Container(classes="card"):
                 yield Static("Running Tasks", classes="card-header")
                 yield Static("No running tasks")
-            
+
             with Container(classes="card"):
                 yield Static("Pending Tasks", classes="card-header")
                 yield Static("No pending tasks")
-            
+
             with Container(classes="card"):
                 yield Static("Completed Today", classes="card-header")
                 yield Static("No completed tasks")
-        
+
         yield Footer()
-    
-    def action_back(self):
+
+    def action_back(self) -> None:
+        """Navigate back to previous screen."""
         self.app.pop_screen()
 
 
 class SettingsScreen(Screen):
-    """Settings screen"""
-    
+    """Settings screen."""
+
     CSS_PATH = None
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("escape", "back", "Back"),
         Binding("s", "save", "Save"),
     ]
-    
+
     def compose(self) -> ComposeResult:
+        """Generate child widgets for the settings screen."""
         yield Header()
-        
+
         with TabbedContent():
             with TabPane("General"):
                 with Container(classes="card"):
@@ -724,30 +766,31 @@ class SettingsScreen(Screen):
                     yield Input(value="AI Dashboard")
                     yield Static("Log Level:")
                     yield Input(value="info")
-            
+
             with TabPane("Security"):
                 with Container(classes="card"):
                     yield Button("Change Admin Password", variant="primary")
                     yield Static("Session Timeout: 30 minutes")
                     yield Static("2FA: Disabled")
-            
+
             with TabPane("SSH"):
                 with Container(classes="card"):
                     yield Static("SSH Port:")
                     yield Input(value="2222")
                     yield Static("Password Auth: Enabled")
                     yield Static("Key Auth: Enabled")
-            
+
             with TabPane("API Keys"):
                 with Container(classes="card"):
                     yield Static("OpenAI API Key:")
                     yield Input(value="sk-...", password=True)
                     yield Static("Anthropic API Key:")
                     yield Input(value="sk-ant-...", password=True)
-        
+
         yield Footer()
-    
-    def action_back(self):
+
+    def action_back(self) -> None:
+        """Navigate back to previous screen."""
         self.app.pop_screen()
 
 
@@ -755,16 +798,17 @@ class SettingsScreen(Screen):
 # MAIN APP
 # =============================================================================
 
+
 class AIDashboardApp(App):
-    """AI Dashboard TUI Application"""
-    
+    """AI Dashboard TUI Application."""
+
     CSS = CSS
     TITLE = "AI Dashboard"
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("q", "quit", "Quit", show=False),
     ]
-    
-    SCREENS = {
+
+    SCREENS: ClassVar[dict[str, type[Screen]]] = {
         "login": LoginScreen,
         "dashboard": DashboardScreen,
         "models": ModelsScreen,
@@ -773,30 +817,84 @@ class AIDashboardApp(App):
         "tasks": TasksScreen,
         "settings": SettingsScreen,
     }
-    
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.config = Config.load()
-        
+
         # Initialize data
         self.models = [
-            AIModel("ollama-llama3.2", "Llama 3.2", "ollama", "chat", "running", 128000),
-            AIModel("ollama-mistral", "Mistral", "ollama", "chat", "running", 32000),
-            AIModel("ollama-codellama", "CodeLlama", "ollama", "chat", "available", 16384),
-            AIModel("openai-gpt4", "GPT-4 Turbo", "openai", "chat", "available", 128000, True, True),
-            AIModel("claude-opus", "Claude 3 Opus", "claude", "chat", "available", 200000, True, True),
+            AIModel(
+                "ollama-llama3.2",
+                "Llama 3.2",
+                "ollama",
+                "chat",
+                "running",
+                128000,
+            ),
+            AIModel(
+                "ollama-mistral",
+                "Mistral",
+                "ollama",
+                "chat",
+                "running",
+                32000,
+            ),
+            AIModel(
+                "ollama-codellama",
+                "CodeLlama",
+                "ollama",
+                "chat",
+                "available",
+                16384,
+            ),
+            AIModel(
+                "openai-gpt4",
+                "GPT-4 Turbo",
+                "openai",
+                "chat",
+                "available",
+                128000,
+                True,
+                True,
+            ),
+            AIModel(
+                "claude-opus",
+                "Claude 3 Opus",
+                "claude",
+                "chat",
+                "available",
+                200000,
+                True,
+                True,
+            ),
         ]
-        
+
         self.agents = [
             Agent("code", "Code Agent", "code", "idle", 12, "codellama"),
-            Agent("research", "Research Agent", "research", "running", 3, "llama3.2"),
+            Agent(
+                "research",
+                "Research Agent",
+                "research",
+                "running",
+                3,
+                "llama3.2",
+            ),
             Agent("task", "Task Agent", "task", "idle", 5, "llama3.2"),
-            Agent("chat", "Chat Agent", "chat", "running", 8, "claude-3-opus"),
+            Agent(
+                "chat",
+                "Chat Agent",
+                "chat",
+                "running",
+                8,
+                "claude-3-opus",
+            ),
         ]
-        
+
         self.tasks: list[Task] = []
-    
+
     def on_mount(self) -> None:
+        """Handle app mount event."""
         if not self.config.admin_password_hash:
             self.push_screen("login")
         else:
@@ -807,8 +905,9 @@ class AIDashboardApp(App):
 # ENTRY POINT
 # =============================================================================
 
-def main():
-    """Main entry point"""
+
+def main() -> None:
+    """Main entry point for the AI Dashboard application."""
     app = AIDashboardApp()
     app.run()
 
