@@ -131,7 +131,7 @@ Screen {
 }
 
 .title-text {
-    color: $text-on-primary;
+    color: $background;
     text-style: bold;
 }
 
@@ -245,7 +245,7 @@ Screen {
 
 .sidebar-item.active {
     background: $primary;
-    color: $text-on-primary;
+    color: $background;
 }
 
 /* Chat */
@@ -255,7 +255,7 @@ Screen {
 
 .chat-messages {
     height: 1fr;
-    background: $surface-darken-1;
+    background: $panel;
     padding: 1;
 }
 
@@ -285,12 +285,12 @@ Button {
 
 Button.primary {
     background: $primary;
-    color: $text-on-primary;
+    color: $background;
 }
 
 Button.danger {
     background: $error;
-    color: $text-on-error;
+    color: $background;
 }
 
 /* Input */
