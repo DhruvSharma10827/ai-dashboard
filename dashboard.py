@@ -4,6 +4,7 @@
 A professional TUI for managing AI models, agents, and workflows.
 """
 
+import ctypes
 import json
 import sys
 from dataclasses import dataclass, field
@@ -876,9 +877,6 @@ def fix_windows_console() -> None:
     # Check if we need to fix the console
     if sys.stdin is None or sys.stdout is None or sys.stderr is None:
         try:
-            import ctypes
-            import os
-
             kernel32 = ctypes.windll.kernel32
 
             # Get standard handles
@@ -887,29 +885,24 @@ def fix_windows_console() -> None:
             stderr_handle = kernel32.GetStdHandle(-12)  # STD_ERROR_HANDLE
 
             # Open console handles if needed
+            # Note: These handles must persist for app lifetime, no context manager
             if sys.stdin is None and stdin_handle:
-                sys.stdin = open("CONIN$", "r", encoding="utf-8", newline="")
-
+                sys.stdin = open("CONIN$", encoding="utf-8", newline="")  # noqa: SIM115
             if sys.stdout is None and stdout_handle:
-                sys.stdout = open("CONOUT$", "w", encoding="utf-8", newline="")
-
+                sys.stdout = open("CONOUT$", "w", encoding="utf-8", newline="")  # noqa: SIM115
             if sys.stderr is None and stderr_handle:
-                sys.stderr = open("CONOUT$", "w", encoding="utf-8", newline="")
+                sys.stderr = open("CONOUT$", "w", encoding="utf-8", newline="")  # noqa: SIM115
 
         except (OSError, AttributeError):
             # If we can't fix the console, try to open a new console window
             try:
-                import ctypes
-
                 ctypes.windll.kernel32.AllocConsole()
-                sys.stdin = open("CONIN$", "r", encoding="utf-8", newline="")
-                sys.stdout = open("CONOUT$", "w", encoding="utf-8", newline="")
-                sys.stderr = open("CONOUT$", "w", encoding="utf-8", newline="")
+                # Note: These handles must persist for app lifetime, no context manager
+                sys.stdin = open("CONIN$", encoding="utf-8", newline="")  # noqa: SIM115
+                sys.stdout = open("CONOUT$", "w", encoding="utf-8", newline="")  # noqa: SIM115
+                sys.stderr = open("CONOUT$", "w", encoding="utf-8", newline="")  # noqa: SIM115
             except (OSError, AttributeError):
-                print(
-                    "Error: Unable to initialize console. "
-                    "Please run from a terminal."
-                )
+                print("Error: Unable to initialize console. Please run from a terminal.")
                 sys.exit(1)
 
 
