@@ -20,13 +20,17 @@ parts/
 sdist/
 var/
 wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
 # PyInstaller
 *.manifest
 *.spec
+build/
+dist/
 
 # Installer logs
 pip-log.txt
@@ -59,14 +63,46 @@ ENV/
 env.bak/
 venv.bak/
 
-# IDE
+# IDEs
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
+.project
+.pydevproject
+.settings/
 
-# OS
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Ruff
+.ruff_cache/
+
+# Pre-commit
+.pre-commit-cache/
+
+# Secrets
+.secrets.baseline
+*.pem
+*.key
+credentials.json
+
+# OS files
 .DS_Store
 .DS_Store?
 ._*
@@ -75,21 +111,7 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# Project specific
-.aidashboard/
-*.db
+# AI Dashboard specific
+.ai-dashboard/
+config.json
 *.log
-configs/secrets.yaml
-
-# Build artifacts
-*.exe
-*.app
-*.dmg
-*.AppImage
-*.deb
-*.rpm
-
-# Secrets
-*.pem
-*.key
-secrets/

@@ -4,21 +4,15 @@ AI Dashboard - Enterprise AI Orchestration System
 A professional TUI for managing AI models, agents, and workflows
 """
 
-import asyncio
 import json
-import os
-import sys
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Dict, List
 
-from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, Vertical, VerticalScroll
-from textual.message import Message
+from textual.containers import Container, Horizontal, VerticalScroll
 from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import (
