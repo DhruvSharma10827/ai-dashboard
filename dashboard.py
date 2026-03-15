@@ -10,7 +10,7 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import argon2
 from textual.app import App, ComposeResult
@@ -28,6 +28,9 @@ from textual.widgets import (
     TabbedContent,
     TabPane,
 )
+
+if TYPE_CHECKING:
+    pass
 
 # =============================================================================
 # CONFIGURATION
@@ -313,7 +316,7 @@ TabbedContent {
 class StatusIndicator(Static):
     """Status indicator widget."""
 
-    def __init__(self, status: str, **kwargs):
+    def __init__(self, status: str, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.status = status
 
@@ -333,7 +336,7 @@ class StatusIndicator(Static):
 class ModelCard(Container):
     """AI Model card widget."""
 
-    def __init__(self, model: AIModel, **kwargs):
+    def __init__(self, model: AIModel, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.model = model
         self.add_class(model.status)
@@ -356,7 +359,7 @@ class ModelCard(Container):
 class AgentCard(Container):
     """Agent card widget."""
 
-    def __init__(self, agent: Agent, **kwargs):
+    def __init__(self, agent: Agent, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.agent = agent
         self.add_class(agent.status)
@@ -381,10 +384,10 @@ class AgentCard(Container):
 class TaskItem(ListItem):
     """Task list item."""
 
-    def __init__(self, task: Task, **kwargs):
+    def __init__(self, task_data: Task, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.task = task
-        self.add_class(task.status)
+        self.task_data = task_data
+        self.add_class(task_data.status)
 
 
 # =============================================================================
@@ -396,15 +399,18 @@ class LoginScreen(Screen):
     """Login screen for authentication."""
 
     CSS_PATH = None
-    BINDINGS: ClassVar[list[Binding]] = [
+    BINDINGS: ClassVar[tuple[Binding, ...]] = (
         Binding("enter", "login", "Login"),
         Binding("escape", "quit", "Quit"),
-    ]
+    )
 
-    def __init__(self, config: Config, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.config = config
-        self._is_setup = not config.admin_password_hash
+        self._is_setup: bool = False
+
+    def on_mount(self) -> None:
+        """Handle screen mount event."""
+        self._is_setup = not self.app.config.admin_password_hash
 
     def compose(self) -> ComposeResult:
         """Generate child widgets for the login screen."""
@@ -464,14 +470,14 @@ class LoginScreen(Screen):
                 self.query_one("#error-msg", Static).update("❌ Passwords don't match")
                 return
             ph = argon2.PasswordHasher()
-            self.config.admin_password_hash = ph.hash(pwd)
-            self.config.save()
+            self.app.config.admin_password_hash = ph.hash(pwd)
+            self.app.config.save()
             self.app.push_screen("dashboard")
         else:
             pwd = self.query_one("#login-password", Input).value
             ph = argon2.PasswordHasher()
             try:
-                ph.verify(self.config.admin_password_hash, pwd)
+                ph.verify(self.app.config.admin_password_hash, pwd)
                 self.app.push_screen("dashboard")
             except argon2.exceptions.VerifyMismatchError:
                 self.query_one("#error-msg", Static).update("❌ Invalid password")
@@ -481,7 +487,7 @@ class DashboardScreen(Screen):
     """Main dashboard screen."""
 
     CSS_PATH = None
-    BINDINGS: ClassVar[list[Binding]] = [
+    BINDINGS: ClassVar[tuple[Binding, ...]] = (
         Binding("1", "show_dashboard", "Dashboard"),
         Binding("2", "show_models", "Models"),
         Binding("3", "show_agents", "Agents"),
@@ -490,7 +496,7 @@ class DashboardScreen(Screen):
         Binding("6", "show_settings", "Settings"),
         Binding("q", "quit", "Quit"),
         Binding("?", "help", "Help"),
-    ]
+    )
 
     def compose(self) -> ComposeResult:
         """Generate child widgets for the dashboard screen."""
@@ -568,10 +574,10 @@ class ModelsScreen(Screen):
     """AI Models management screen."""
 
     CSS_PATH = None
-    BINDINGS: ClassVar[list[Binding]] = [
+    BINDINGS: ClassVar[tuple[Binding, ...]] = (
         Binding("escape", "back", "Back"),
         Binding("r", "refresh", "Refresh"),
-    ]
+    )
 
     def compose(self) -> ComposeResult:
         """Generate child widgets for the models screen."""
@@ -621,10 +627,10 @@ class AgentsScreen(Screen):
     """Agents management screen."""
 
     CSS_PATH = None
-    BINDINGS: ClassVar[list[Binding]] = [
+    BINDINGS: ClassVar[tuple[Binding, ...]] = (
         Binding("escape", "back", "Back"),
         Binding("a", "add_agent", "Add Agent"),
-    ]
+    )
 
     def compose(self) -> ComposeResult:
         """Generate child widgets for the agents screen."""
@@ -649,12 +655,12 @@ class ChatScreen(Screen):
     """Chat interface screen."""
 
     CSS_PATH = None
-    BINDINGS: ClassVar[list[Binding]] = [
+    BINDINGS: ClassVar[tuple[Binding, ...]] = (
         Binding("escape", "back", "Back"),
         Binding("enter", "send", "Send"),
-    ]
+    )
 
-    messages = reactive([])
+    messages: reactive[list[str]] = reactive([])
 
     def compose(self) -> ComposeResult:
         """Generate child widgets for the chat screen."""
@@ -702,10 +708,10 @@ class TasksScreen(Screen):
     """Tasks management screen."""
 
     CSS_PATH = None
-    BINDINGS: ClassVar[list[Binding]] = [
+    BINDINGS: ClassVar[tuple[Binding, ...]] = (
         Binding("escape", "back", "Back"),
         Binding("n", "new_task", "New Task"),
-    ]
+    )
 
     def compose(self) -> ComposeResult:
         """Generate child widgets for the tasks screen."""
@@ -742,10 +748,10 @@ class SettingsScreen(Screen):
     """Settings screen."""
 
     CSS_PATH = None
-    BINDINGS: ClassVar[list[Binding]] = [
+    BINDINGS: ClassVar[tuple[Binding, ...]] = (
         Binding("escape", "back", "Back"),
         Binding("s", "save", "Save"),
-    ]
+    )
 
     def compose(self) -> ComposeResult:
         """Generate child widgets for the settings screen."""
@@ -796,9 +802,7 @@ class AIDashboardApp(App):
 
     CSS = CSS
     TITLE = "AI Dashboard"
-    BINDINGS: ClassVar[list[Binding]] = [
-        Binding("q", "quit", "Quit", show=False),
-    ]
+    BINDINGS: ClassVar[tuple[Binding, ...]] = (Binding("q", "quit", "Quit", show=False),)
 
     SCREENS: ClassVar[dict[str, type[Screen]]] = {
         "login": LoginScreen,
@@ -810,12 +814,12 @@ class AIDashboardApp(App):
         "settings": SettingsScreen,
     }
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.config = Config.load()
+        self.config: Config = Config.load()
 
         # Initialize data
-        self.models = [
+        self.models: list[AIModel] = [
             AIModel("ollama-llama3.2", "Llama 3.2", "ollama", "chat", "running", 128000),
             AIModel("ollama-mistral", "Mistral", "ollama", "chat", "running", 32000),
             AIModel("ollama-codellama", "CodeLlama", "ollama", "chat", "available", 16384),
@@ -841,7 +845,7 @@ class AIDashboardApp(App):
             ),
         ]
 
-        self.agents = [
+        self.agents: list[Agent] = [
             Agent("code", "Code Agent", "code", "idle", 12, "codellama"),
             Agent("research", "Research Agent", "research", "running", 3, "llama3.2"),
             Agent("task", "Task Agent", "task", "idle", 5, "llama3.2"),
