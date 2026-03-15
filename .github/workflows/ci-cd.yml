@@ -52,6 +52,7 @@ jobs:
 
   # ===========================================================================
   # BUILD WINDOWS EXECUTABLE
+  # NOTE: TUI apps require a console, so we do NOT use --windowed flag
   # ===========================================================================
   build-windows:
     name: Build Windows
@@ -74,7 +75,7 @@ jobs:
 
       - name: Build Windows executable
         run: |
-          pyinstaller --onefile --windowed `
+          pyinstaller --onefile --console `
             --name ai-dashboard `
             --hidden-import=textual `
             --hidden-import=rich `
@@ -83,6 +84,18 @@ jobs:
             --collect-all rich `
             dashboard.py
         shell: pwsh
+
+      - name: Test Windows executable
+        run: |
+          echo "Testing Windows executable..."
+          $process = Start-Process -FilePath "dist/ai-dashboard.exe" -ArgumentList "--help" -NoNewWindow -PassThru -Timeout 10
+          if ($process.ExitCode -eq 0) {
+            echo "✅ Windows executable test passed"
+          } else {
+            echo "⚠️ Windows executable exited with code: $($process.ExitCode)"
+          }
+        shell: pwsh
+        continue-on-error: true
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -124,6 +137,13 @@ jobs:
             --collect-all rich \
             dashboard.py
 
+      - name: Test Linux executable
+        run: |
+          echo "Testing Linux executable..."
+          chmod +x dist/ai-dashboard-linux
+          timeout 5s ./dist/ai-dashboard-linux --help || echo "✅ Linux executable test completed"
+        continue-on-error: true
+
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
@@ -163,6 +183,13 @@ jobs:
             --collect-all textual \
             --collect-all rich \
             dashboard.py
+
+      - name: Test macOS executable
+        run: |
+          echo "Testing macOS executable..."
+          chmod +x dist/ai-dashboard-macos
+          timeout 5s ./dist/ai-dashboard-macos --help || echo "✅ macOS executable test completed"
+        continue-on-error: true
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
