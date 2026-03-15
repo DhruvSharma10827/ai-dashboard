@@ -5,6 +5,7 @@ A professional TUI for managing AI models, agents, and workflows.
 """
 
 import json
+import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -861,8 +862,62 @@ class AIDashboardApp(App):
 # =============================================================================
 
 
+def fix_windows_console() -> None:
+    """Fix Windows console for Textual TUI applications.
+
+    When running from PyInstaller or certain contexts on Windows,
+    sys.stdin/stdout/stderr may be None, causing Textual's Windows
+    driver to fail. This function reassigns them to proper console
+    handles.
+    """
+    if sys.platform != "win32":
+        return
+
+    # Check if we need to fix the console
+    if sys.stdin is None or sys.stdout is None or sys.stderr is None:
+        try:
+            import ctypes
+            import os
+
+            kernel32 = ctypes.windll.kernel32
+
+            # Get standard handles
+            stdin_handle = kernel32.GetStdHandle(-10)  # STD_INPUT_HANDLE
+            stdout_handle = kernel32.GetStdHandle(-11)  # STD_OUTPUT_HANDLE
+            stderr_handle = kernel32.GetStdHandle(-12)  # STD_ERROR_HANDLE
+
+            # Open console handles if needed
+            if sys.stdin is None and stdin_handle:
+                sys.stdin = open("CONIN$", "r", encoding="utf-8", newline="")
+
+            if sys.stdout is None and stdout_handle:
+                sys.stdout = open("CONOUT$", "w", encoding="utf-8", newline="")
+
+            if sys.stderr is None and stderr_handle:
+                sys.stderr = open("CONOUT$", "w", encoding="utf-8", newline="")
+
+        except (OSError, AttributeError):
+            # If we can't fix the console, try to open a new console window
+            try:
+                import ctypes
+
+                ctypes.windll.kernel32.AllocConsole()
+                sys.stdin = open("CONIN$", "r", encoding="utf-8", newline="")
+                sys.stdout = open("CONOUT$", "w", encoding="utf-8", newline="")
+                sys.stderr = open("CONOUT$", "w", encoding="utf-8", newline="")
+            except (OSError, AttributeError):
+                print(
+                    "Error: Unable to initialize console. "
+                    "Please run from a terminal."
+                )
+                sys.exit(1)
+
+
 def main() -> None:
     """Main entry point for the AI Dashboard application."""
+    # Fix Windows console issues before running the app
+    fix_windows_console()
+
     app = AIDashboardApp()
     app.run()
 
