@@ -866,44 +866,40 @@ class AIDashboardApp(App):
 def fix_windows_console() -> None:
     """Fix Windows console for Textual TUI applications.
 
-    When running from PyInstaller or certain contexts on Windows,
-    sys.stdin/stdout/stderr may be None, causing Textual's Windows
-    driver to fail. This function reassigns them to proper console
-    handles.
+    When running from PyInstaller with --windowed flag on Windows,
+    no console is attached, causing sys.stdin/stdout/stderr to be None.
+    This function allocates a new console and reassigns the handles.
     """
     if sys.platform != "win32":
         return
 
-    # Check if we need to fix the console
-    if sys.stdin is None or sys.stdout is None or sys.stderr is None:
-        try:
-            kernel32 = ctypes.windll.kernel32
+    # Check if running from PyInstaller frozen executable
+    is_frozen = getattr(sys, "frozen", False)
 
-            # Get standard handles
-            stdin_handle = kernel32.GetStdHandle(-10)  # STD_INPUT_HANDLE
-            stdout_handle = kernel32.GetStdHandle(-11)  # STD_OUTPUT_HANDLE
-            stderr_handle = kernel32.GetStdHandle(-12)  # STD_ERROR_HANDLE
+    # Check if console handles are missing
+    needs_console = is_frozen or sys.stdin is None or sys.stdout is None or sys.stderr is None
 
-            # Open console handles if needed
-            # Note: These handles must persist for app lifetime, no context manager
-            if sys.stdin is None and stdin_handle:
-                sys.stdin = open("CONIN$", encoding="utf-8", newline="")  # noqa: SIM115
-            if sys.stdout is None and stdout_handle:
-                sys.stdout = open("CONOUT$", "w", encoding="utf-8", newline="")  # noqa: SIM115
-            if sys.stderr is None and stderr_handle:
-                sys.stderr = open("CONOUT$", "w", encoding="utf-8", newline="")  # noqa: SIM115
+    if not needs_console:
+        return
 
-        except (OSError, AttributeError):
-            # If we can't fix the console, try to open a new console window
-            try:
-                ctypes.windll.kernel32.AllocConsole()
-                # Note: These handles must persist for app lifetime, no context manager
-                sys.stdin = open("CONIN$", encoding="utf-8", newline="")  # noqa: SIM115
-                sys.stdout = open("CONOUT$", "w", encoding="utf-8", newline="")  # noqa: SIM115
-                sys.stderr = open("CONOUT$", "w", encoding="utf-8", newline="")  # noqa: SIM115
-            except (OSError, AttributeError):
-                print("Error: Unable to initialize console. Please run from a terminal.")
-                sys.exit(1)
+    try:
+        kernel32 = ctypes.windll.kernel32
+
+        # Always allocate a new console when frozen (PyInstaller --windowed)
+        # This is necessary because --windowed apps have no console attached
+        if is_frozen:
+            kernel32.FreeConsole()  # Detach any existing console
+            kernel32.AllocConsole()  # Allocate new console
+
+        # Open console handles
+        # Note: These handles must persist for app lifetime, no context manager
+        sys.stdin = open("CONIN$", encoding="utf-8", newline="")  # noqa: SIM115
+        sys.stdout = open("CONOUT$", "w", encoding="utf-8", newline="")  # noqa: SIM115
+        sys.stderr = open("CONOUT$", "w", encoding="utf-8", newline="")  # noqa: SIM115
+
+    except (OSError, AttributeError):
+        print("Error: Unable to initialize console. Please run from a terminal.")
+        sys.exit(1)
 
 
 def main() -> None:
