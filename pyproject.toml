@@ -2,6 +2,12 @@
 requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
 [project]
 name = "ai-dashboard"
 version = "1.0.0"
@@ -36,6 +42,7 @@ dependencies = [
     "aiohttp>=3.9.0",
     "pydantic>=2.5.0",
     "cryptography>=41.0.0",
+    "pytest-benchmark>=4.0.0",
 ]
 
 [project.optional-dependencies]
@@ -64,6 +71,8 @@ dev = [
     "pytest>=7.4.0",
     "pytest-asyncio>=0.23.0",
     "pytest-cov>=4.1.0",
+    "pytest-benchmark>=4.0.0",
+    "pytest-mock>=3.12.0",
     
     # Build Tools
     "pyinstaller>=6.3.0",
@@ -71,7 +80,7 @@ dev = [
 ]
 
 [project.scripts]
-ai-dashboard = "dashboard:main"
+ai-dashboard = "ai_dashboard.app:main"
 
 [project.urls]
 Homepage = "https://github.com/ai-dashboard/ai-dashboard"
@@ -169,7 +178,7 @@ ignore = [
 "__init__.py" = ["F401", "D104"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["dashboard"]
+known-first-party = ["ai_dashboard"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -208,7 +217,7 @@ exclude = '''
 [tool.isort]
 profile = "black"
 line_length = 100
-known_first_party = ["dashboard"]
+known_first_party = ["ai_dashboard"]
 force_single_line = true
 skip = [".git", ".mypy_cache", ".pytest_cache", ".venv", "venv", "__pycache__", "build", "dist"]
 
@@ -299,7 +308,7 @@ ignored-modules = ["textual", "rich"]
 # BANDIT CONFIGURATION (Security Linting)
 # =============================================================================
 [tool.bandit]
-targets = ["dashboard.py"]
+targets = ["src/ai_dashboard"]
 exclude_dirs = [".git", ".mypy_cache", ".pytest_cache", ".venv", "venv", "__pycache__", "build", "dist", "tests"]
 skips = ["B101", "B311"]
 
@@ -308,6 +317,7 @@ skips = ["B101", "B311"]
 # =============================================================================
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 python_classes = ["Test*"]
@@ -327,7 +337,7 @@ filterwarnings = [
 # COVERAGE CONFIGURATION
 # =============================================================================
 [tool.coverage.run]
-source = ["dashboard"]
+source = ["src/ai_dashboard"]
 branch = true
 omit = [
     "*/tests/*",
@@ -355,4 +365,4 @@ skip_covered = true
 [tool.vulture]
 ignore_names = ["main"]
 min_confidence = 80
-paths = ["dashboard.py"]
+paths = ["src/ai_dashboard"]
