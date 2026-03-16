@@ -1,17 +1,18 @@
 """Pytest configuration and fixtures for AI Dashboard tests."""
 
-import pytest
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock
+from unittest.mock import Mock
+
+import pytest
 
 from ai_dashboard.core.config import Config
+from ai_dashboard.services.agent_service import AgentService
 from ai_dashboard.services.auth import AuthService
 from ai_dashboard.services.model_service import ModelService
-from ai_dashboard.services.agent_service import AgentService
-from ai_dashboard.services.task_service import TaskService
 from ai_dashboard.services.storage import StorageService
-
+from ai_dashboard.services.task_service import TaskService
 
 # Configure pytest
 # pytest_plugins = ["pytest_benchmark"]  # Optional, uncomment if needed
@@ -20,6 +21,7 @@ from ai_dashboard.services.storage import StorageService
 # ============================================================================
 # Command-line options
 # ============================================================================
+
 
 def pytest_addoption(parser):
     """Add custom command-line options."""
@@ -49,7 +51,7 @@ def pytest_collection_modifyitems(config, items):
     """Skip tests based on markers and options."""
     skip_slow = pytest.mark.skip(reason="need --run-slow option to run")
     skip_integration = pytest.mark.skip(reason="need --run-integration option to run")
-    
+
     for item in items:
         if "slow" in item.keywords and not config.getoption("--run-slow"):
             item.add_marker(skip_slow)
@@ -61,6 +63,7 @@ def pytest_collection_modifyitems(config, items):
 # Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def temp_dir():
     """Create a temporary directory for tests."""
@@ -71,20 +74,19 @@ def temp_dir():
 @pytest.fixture
 def temp_config_file(temp_dir):
     """Create a temporary config file."""
-    config_path = temp_dir / "config.json"
-    return config_path
+    return temp_dir / "config.json"
 
 
 @pytest.fixture
 def temp_db(temp_dir):
     """Create a temporary database file."""
-    db_path = temp_dir / "test.db"
-    return db_path
+    return temp_dir / "test.db"
 
 
 # ============================================================================
 # Config Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def config():
@@ -103,6 +105,7 @@ def config_with_temp_dir(temp_dir, monkeypatch):
 # ============================================================================
 # Service Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def auth_service(config):
@@ -158,11 +161,12 @@ def all_services(config, temp_db):
 # Model Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def sample_model():
     """Create a sample AIModel."""
     from ai_dashboard.models.ai_model import AIModel
-    
+
     return AIModel(
         id="test-model-001",
         name="Test Model",
@@ -179,7 +183,7 @@ def sample_model():
 def sample_agent():
     """Create a sample Agent."""
     from ai_dashboard.models.agent import Agent
-    
+
     return Agent(
         id="test-agent-001",
         name="Test Agent",
@@ -194,7 +198,7 @@ def sample_agent():
 def sample_task():
     """Create a sample Task."""
     from ai_dashboard.models.task import Task
-    
+
     return Task(
         id="test-task-001",
         title="Test Task",
@@ -208,7 +212,7 @@ def sample_task():
 def sample_models():
     """Create multiple sample models."""
     from ai_dashboard.models.ai_model import AIModel
-    
+
     return [
         AIModel(
             id=f"model-{i:03d}",
@@ -224,7 +228,7 @@ def sample_models():
 def sample_agents():
     """Create multiple sample agents."""
     from ai_dashboard.models.agent import Agent
-    
+
     roles = ["code", "research", "task", "chat"]
     return [
         Agent(
@@ -240,6 +244,7 @@ def sample_agents():
 # ============================================================================
 # Mock Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def mock_app():
@@ -269,15 +274,18 @@ def mock_storage():
 # Helper Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def assert_no_errors():
     """Helper to assert no errors in result."""
+
     def _assert(result):
         assert result is not None
         if hasattr(result, "error"):
             assert result.error is None
         if hasattr(result, "errors"):
             assert len(result.errors) == 0
+
     return _assert
 
 
@@ -285,7 +293,7 @@ def assert_no_errors():
 def wait_for_condition():
     """Helper to wait for a condition to be true."""
     import time
-    
+
     def _wait(condition, timeout=5, interval=0.1):
         start = time.time()
         while time.time() - start < timeout:
@@ -293,7 +301,7 @@ def wait_for_condition():
                 return True
             time.sleep(interval)
         return False
-    
+
     return _wait
 
 
@@ -301,13 +309,15 @@ def wait_for_condition():
 # Cleanup Fixtures
 # ============================================================================
 
+
 @pytest.fixture(autouse=True)
 def cleanup_config():
     """Cleanup config after each test."""
     yield
-    
+
     # Reset global config
     from ai_dashboard.core import config as config_module
+
     config_module._config = None
 
 
@@ -315,6 +325,6 @@ def cleanup_config():
 def cleanup_services():
     """Cleanup services after each test."""
     yield
-    
+
     # Reset service instances if needed
     pass
