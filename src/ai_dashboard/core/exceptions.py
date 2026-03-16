@@ -21,34 +21,34 @@ Exception Hierarchy:
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 
 class AIDashboardError(Exception):
     """Base exception for all AI Dashboard errors.
-    
+
     Attributes:
         message: Human-readable error message.
         error_code: Optional error code for programmatic handling.
         details: Additional error details.
     """
-    
+
     def __init__(
         self,
         message: str,
-        error_code: Optional[str] = None,
-        details: Optional[dict[str, Any]] = None,
+        error_code: str | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message)
         self.message = message
         self.error_code = error_code or "UNKNOWN_ERROR"
         self.details = details or {}
-    
+
     def __str__(self) -> str:
         if self.details:
             return f"[{self.error_code}] {self.message} - {self.details}"
         return f"[{self.error_code}] {self.message}"
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert exception to dictionary for serialization."""
         return {
@@ -60,35 +60,35 @@ class AIDashboardError(Exception):
 
 class ConfigurationError(AIDashboardError):
     """Raised when there is a configuration-related error."""
-    
+
     def __init__(
         self,
         message: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message, "CONFIG_ERROR", details)
 
 
 class AuthenticationError(AIDashboardError):
     """Raised when authentication fails."""
-    
+
     def __init__(
         self,
         message: str = "Authentication failed",
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message, "AUTH_ERROR", details)
 
 
 class ModelError(AIDashboardError):
     """Base exception for model-related errors."""
-    
+
     def __init__(
         self,
         message: str,
-        model_id: Optional[str] = None,
+        model_id: str | None = None,
         error_code: str = "MODEL_ERROR",
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         details = details or {}
         if model_id:
@@ -98,7 +98,7 @@ class ModelError(AIDashboardError):
 
 class ModelNotFoundError(ModelError):
     """Raised when a requested model is not found."""
-    
+
     def __init__(self, model_id: str) -> None:
         super().__init__(
             f"Model not found: {model_id}",
@@ -109,11 +109,11 @@ class ModelNotFoundError(ModelError):
 
 class ModelConnectionError(ModelError):
     """Raised when connection to a model fails."""
-    
+
     def __init__(
         self,
         model_id: str,
-        reason: Optional[str] = None,
+        reason: str | None = None,
     ) -> None:
         message = f"Failed to connect to model: {model_id}"
         if reason:
@@ -123,13 +123,13 @@ class ModelConnectionError(ModelError):
 
 class AgentError(AIDashboardError):
     """Base exception for agent-related errors."""
-    
+
     def __init__(
         self,
         message: str,
-        agent_id: Optional[str] = None,
+        agent_id: str | None = None,
         error_code: str = "AGENT_ERROR",
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         details = details or {}
         if agent_id:
@@ -139,7 +139,7 @@ class AgentError(AIDashboardError):
 
 class AgentNotFoundError(AgentError):
     """Raised when a requested agent is not found."""
-    
+
     def __init__(self, agent_id: str) -> None:
         super().__init__(
             f"Agent not found: {agent_id}",
@@ -150,8 +150,8 @@ class AgentNotFoundError(AgentError):
 
 class AgentBusyError(AgentError):
     """Raised when trying to use a busy agent."""
-    
-    def __init__(self, agent_id: str, current_task: Optional[str] = None) -> None:
+
+    def __init__(self, agent_id: str, current_task: str | None = None) -> None:
         message = f"Agent is busy: {agent_id}"
         details = {}
         if current_task:
@@ -162,13 +162,13 @@ class AgentBusyError(AgentError):
 
 class TaskError(AIDashboardError):
     """Base exception for task-related errors."""
-    
+
     def __init__(
         self,
         message: str,
-        task_id: Optional[str] = None,
+        task_id: str | None = None,
         error_code: str = "TASK_ERROR",
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         details = details or {}
         if task_id:
@@ -178,7 +178,7 @@ class TaskError(AIDashboardError):
 
 class TaskNotFoundError(TaskError):
     """Raised when a requested task is not found."""
-    
+
     def __init__(self, task_id: str) -> None:
         super().__init__(
             f"Task not found: {task_id}",
@@ -189,11 +189,11 @@ class TaskNotFoundError(TaskError):
 
 class TaskExecutionError(TaskError):
     """Raised when task execution fails."""
-    
+
     def __init__(
         self,
         task_id: str,
-        reason: Optional[str] = None,
+        reason: str | None = None,
     ) -> None:
         message = f"Task execution failed: {task_id}"
         if reason:
@@ -203,12 +203,12 @@ class TaskExecutionError(TaskError):
 
 class ValidationError(AIDashboardError):
     """Raised when validation fails."""
-    
+
     def __init__(
         self,
         message: str,
-        field: Optional[str] = None,
-        value: Optional[Any] = None,
+        field: str | None = None,
+        value: Any | None = None,
     ) -> None:
         details = {}
         if field:
@@ -220,22 +220,22 @@ class ValidationError(AIDashboardError):
 
 class SecurityError(AIDashboardError):
     """Raised when a security violation is detected."""
-    
+
     def __init__(
         self,
         message: str,
-        details: Optional[dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message, "SECURITY_ERROR", details)
 
 
 class RateLimitError(AIDashboardError):
     """Raised when rate limit is exceeded."""
-    
+
     def __init__(
         self,
         provider: str,
-        retry_after: Optional[int] = None,
+        retry_after: int | None = None,
     ) -> None:
         message = f"Rate limit exceeded for {provider}"
         details = {"provider": provider}

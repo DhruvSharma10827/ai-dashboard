@@ -998,28 +998,28 @@ THEMES: dict[str, dict[str, str]] = {
 
 def get_theme_css(theme_name: ThemeName = "default") -> str:
     """Get CSS with theme variables substituted.
-    
+
     Args:
         theme_name: Name of the theme to use.
-        
+
     Returns:
         CSS string with theme variables.
     """
     theme = THEMES.get(theme_name, THEMES["default"])
-    
+
     css = CSS
-    
+
     # Replace theme variables
     for var_name, var_value in theme.items():
         css = css.replace(f"${var_name}", var_value)
         css = css.replace(f"${var_name.replace('_', '-')}", var_value)
-    
+
     return css
 
 
 def get_available_themes() -> list[str]:
     """Get list of available theme names.
-    
+
     Returns:
         List of theme names.
     """
@@ -1028,10 +1028,10 @@ def get_available_themes() -> list[str]:
 
 def get_theme_colors(theme_name: ThemeName = "default") -> dict[str, str]:
     """Get color palette for a theme.
-    
+
     Args:
         theme_name: Name of the theme.
-        
+
     Returns:
         Dictionary of color variables.
     """

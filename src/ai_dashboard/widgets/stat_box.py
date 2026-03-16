@@ -2,36 +2,34 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from textual.app import ComposeResult
-from textual.containers import Container, Vertical
+from textual.containers import Container
 from textual.widgets import Static
 
 
 class StatBox(Container):
     """Widget for displaying a statistic box.
-    
+
     This widget displays a value with a label, optionally
     with an icon and trend indicator.
-    
+
     Attributes:
         value: The statistic value to display.
         label: The label for the statistic.
         icon: Optional icon to display.
         trend: Optional trend indicator (up, down, neutral).
-    
+
     Example:
         >>> box = StatBox(value="5", label="Models", icon="🤖")
         >>> box = StatBox(value="78%", label="CPU", trend="up")
     """
-    
+
     TREND_ICONS = {
         "up": "📈",
         "down": "📉",
         "neutral": "➡️",
     }
-    
+
     DEFAULT_CSS = """
     StatBox {
         width: 1fr;
@@ -80,7 +78,7 @@ class StatBox(Container):
     StatBox.trend-down .stat-value { color: $error; }
     StatBox.trend-neutral .stat-value { color: $warning; }
     """
-    
+
     def __init__(
         self,
         value: str | int | float,
@@ -93,7 +91,7 @@ class StatBox(Container):
         classes: str | None = None,
     ) -> None:
         """Initialize stat box.
-        
+
         Args:
             value: Statistic value.
             label: Label for the statistic.
@@ -108,32 +106,32 @@ class StatBox(Container):
         self._label = label
         self._icon = icon
         self._trend = trend
-        
+
         if trend:
             self.add_class(f"trend-{trend}")
-    
+
     def compose(self) -> ComposeResult:
         """Compose the stat box widget."""
         if self._icon:
             yield Static(self._icon, classes="stat-icon")
-        
+
         with Container(classes="stat-value-container"):
             value_text = self._value
             if self._trend:
                 trend_icon = self.TREND_ICONS.get(self._trend, "")
                 value_text = f"{value_text} {trend_icon}"
             yield Static(value_text, classes="stat-value")
-        
+
         yield Static(self._label, classes="stat-label")
-    
+
     @property
     def value(self) -> str:
         """Get the current value."""
         return self._value
-    
+
     def update_value(self, value: str | int | float) -> None:
         """Update the displayed value.
-        
+
         Args:
             value: New value to display.
         """
@@ -147,10 +145,10 @@ class StatBox(Container):
             value_widget.update(value_text)
         except Exception:
             pass
-    
+
     def update_label(self, label: str) -> None:
         """Update the label.
-        
+
         Args:
             label: New label.
         """

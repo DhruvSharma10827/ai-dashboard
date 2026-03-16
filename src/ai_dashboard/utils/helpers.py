@@ -3,18 +3,17 @@
 from __future__ import annotations
 
 import secrets
-import string
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 
 def generate_id(prefix: str = "") -> str:
     """Generate a unique identifier.
-    
+
     Args:
         prefix: Optional prefix for the ID.
-        
+
     Returns:
         Unique identifier string.
     """
@@ -26,7 +25,7 @@ def generate_id(prefix: str = "") -> str:
 
 def generate_task_id() -> str:
     """Generate a unique task ID.
-    
+
     Returns:
         Task ID string.
     """
@@ -35,7 +34,7 @@ def generate_task_id() -> str:
 
 def generate_session_id() -> str:
     """Generate a secure session ID.
-    
+
     Returns:
         Session ID string.
     """
@@ -44,12 +43,12 @@ def generate_session_id() -> str:
 
 def truncate_string(text: str, max_length: int = 50, suffix: str = "...") -> str:
     """Truncate a string to a maximum length.
-    
+
     Args:
         text: String to truncate.
         max_length: Maximum length.
         suffix: Suffix to add when truncated.
-        
+
     Returns:
         Truncated string.
     """
@@ -60,12 +59,12 @@ def truncate_string(text: str, max_length: int = 50, suffix: str = "...") -> str
 
 def safe_get(d: dict, *keys: str, default: Any = None) -> Any:
     """Safely get nested dictionary value.
-    
+
     Args:
         d: Dictionary to get value from.
         *keys: Keys to traverse.
         default: Default value if key not found.
-        
+
     Returns:
         Value if found, default otherwise.
     """
@@ -81,11 +80,11 @@ def safe_get(d: dict, *keys: str, default: Any = None) -> Any:
 
 def merge_dicts(base: dict, override: dict) -> dict:
     """Merge two dictionaries recursively.
-    
+
     Args:
         base: Base dictionary.
         override: Dictionary to merge into base.
-        
+
     Returns:
         Merged dictionary.
     """
@@ -100,7 +99,7 @@ def merge_dicts(base: dict, override: dict) -> dict:
 
 def get_timestamp() -> str:
     """Get current timestamp as ISO string.
-    
+
     Returns:
         ISO formatted timestamp.
     """
@@ -109,10 +108,10 @@ def get_timestamp() -> str:
 
 def parse_bool(value: str) -> bool:
     """Parse a string to boolean.
-    
+
     Args:
         value: String to parse.
-        
+
     Returns:
         Boolean value.
     """
@@ -121,10 +120,10 @@ def parse_bool(value: str) -> bool:
 
 def ensure_list(value: Any) -> list:
     """Ensure value is a list.
-    
+
     Args:
         value: Value to ensure is a list.
-        
+
     Returns:
         List value.
     """

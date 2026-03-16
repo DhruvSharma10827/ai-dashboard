@@ -14,29 +14,30 @@ Example:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 
 class MessageRole(Enum):
     """Enumeration of chat message roles.
-    
+
     Attributes:
         SYSTEM: System message (instructions).
         USER: User message.
         ASSISTANT: AI assistant message.
         TOOL: Tool/function message.
     """
+
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
     TOOL = "tool"
-    
+
     def __str__(self) -> str:
         return self.value
-    
+
     @property
     def icon(self) -> str:
         """Get the icon for this role."""
@@ -52,9 +53,9 @@ class MessageRole(Enum):
 @dataclass
 class ChatMessage:
     """Chat message representation.
-    
+
     This class represents a single message in a chat session.
-    
+
     Attributes:
         id: Unique message identifier.
         session_id: ID of the chat session.
@@ -65,20 +66,21 @@ class ChatMessage:
         tokens: Number of tokens in the message.
         metadata: Additional metadata.
     """
-    id: Optional[int] = None
+
+    id: int | None = None
     session_id: str = ""
     role: str = "user"
     content: str = ""
-    model_id: Optional[str] = None
-    created_at: Optional[datetime] = None
-    tokens: Optional[int] = None
+    model_id: str | None = None
+    created_at: datetime | None = None
+    tokens: int | None = None
     metadata: dict = field(default_factory=dict)
-    
+
     def __post_init__(self) -> None:
         """Initialize default values after creation."""
         if self.created_at is None:
             self.created_at = datetime.now()
-    
+
     @property
     def role_icon(self) -> str:
         """Get the icon for this message's role."""
@@ -87,7 +89,7 @@ class ChatMessage:
             return role.icon
         except ValueError:
             return "💬"
-    
+
     def to_dict(self) -> dict:
         """Convert message to dictionary."""
         return {
@@ -100,7 +102,7 @@ class ChatMessage:
             "tokens": self.tokens,
             "metadata": self.metadata,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> ChatMessage:
         """Create message from dictionary."""
@@ -112,10 +114,10 @@ class ChatMessage:
 @dataclass
 class ChatSession:
     """Chat session representation.
-    
+
     This class represents a chat session with its metadata
     and message history.
-    
+
     Attributes:
         id: Unique session identifier.
         name: Session name/title.
@@ -126,36 +128,37 @@ class ChatSession:
         total_tokens: Total tokens used in the session.
         metadata: Additional metadata.
     """
+
     id: str = ""
     name: str = "New Chat"
-    model_id: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    model_id: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
     message_count: int = 0
     total_tokens: int = 0
     metadata: dict = field(default_factory=dict)
-    
+
     def __post_init__(self) -> None:
         """Initialize default values after creation."""
         if self.created_at is None:
             self.created_at = datetime.now()
         if self.updated_at is None:
             self.updated_at = datetime.now()
-    
+
     def update(self) -> None:
         """Update the session's updated_at timestamp."""
         self.updated_at = datetime.now()
-    
+
     def add_message(self, tokens: int = 0) -> None:
         """Record a new message in the session.
-        
+
         Args:
             tokens: Number of tokens in the message.
         """
         self.message_count += 1
         self.total_tokens += tokens
         self.update()
-    
+
     def to_dict(self) -> dict:
         """Convert session to dictionary."""
         return {
@@ -168,7 +171,7 @@ class ChatSession:
             "total_tokens": self.total_tokens,
             "metadata": self.metadata,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> ChatSession:
         """Create session from dictionary."""

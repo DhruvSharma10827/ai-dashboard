@@ -10,20 +10,18 @@ Example:
 
 from __future__ import annotations
 
-import asyncio
 import json
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
 
 from ai_dashboard.core.config import CONFIG_DIR
-from ai_dashboard.core.exceptions import ConfigurationError
 from ai_dashboard.core.logging import get_logger
 from ai_dashboard.models.agent import Agent
 from ai_dashboard.models.ai_model import AIModel
-from ai_dashboard.models.chat import ChatMessage, ChatSession
+from ai_dashboard.models.chat import ChatMessage
+from ai_dashboard.models.chat import ChatSession
 from ai_dashboard.models.task import Task
 from ai_dashboard.models.user import User
 
@@ -35,7 +33,7 @@ DB_PATH = CONFIG_DIR / "ai_dashboard.db"
 
 class StorageService:
     """Service for data persistence using SQLite.
-    
+
     This service handles:
     - Database initialization
     - Model persistence
@@ -43,24 +41,24 @@ class StorageService:
     - Task persistence
     - Chat history persistence
     - User persistence
-    
+
     Attributes:
         db_path: Path to SQLite database file.
     """
-    
-    def __init__(self, db_path: Optional[Path] = None) -> None:
+
+    def __init__(self, db_path: Path | None = None) -> None:
         """Initialize storage service.
-        
+
         Args:
             db_path: Optional custom database path.
         """
         self.db_path = db_path or DB_PATH
         self._ensure_tables()
-    
+
     @contextmanager
     def _get_connection(self) -> sqlite3.Connection:
         """Get database connection context manager.
-        
+
         Yields:
             SQLite connection.
         """
@@ -74,14 +72,14 @@ class StorageService:
             raise
         finally:
             conn.close()
-    
+
     def _ensure_tables(self) -> None:
         """Create database tables if they don't exist."""
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            
+
             # Models table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS models (
@@ -103,7 +101,7 @@ class StorageService:
                     metadata TEXT
                 )
             """)
-            
+
             # Agents table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS agents (
@@ -123,7 +121,7 @@ class StorageService:
                     metadata TEXT
                 )
             """)
-            
+
             # Tasks table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS tasks (
@@ -147,7 +145,7 @@ class StorageService:
                     timeout_seconds INTEGER DEFAULT 300
                 )
             """)
-            
+
             # Chat sessions table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS chat_sessions (
@@ -161,7 +159,7 @@ class StorageService:
                     metadata TEXT
                 )
             """)
-            
+
             # Chat messages table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS chat_messages (
@@ -176,7 +174,7 @@ class StorageService:
                     FOREIGN KEY (session_id) REFERENCES chat_sessions(id)
                 )
             """)
-            
+
             # Users table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS users (
@@ -195,45 +193,55 @@ class StorageService:
                     metadata TEXT
                 )
             """)
-            
+
             logger.debug("Database tables initialized")
-    
+
     # Model operations
-    
+
     def save_model(self, model: AIModel) -> None:
         """Save a model to the database.
-        
+
         Args:
             model: Model to save.
         """
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO models (
                     id, name, provider, model_type, status, context_size,
                     supports_vision, supports_tools, supports_streaming,
                     endpoint, max_tokens, temperature, created_at, last_used,
                     total_requests, metadata
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                model.id, model.name, model.provider, model.model_type,
-                model.status, model.context_size,
-                int(model.supports_vision), int(model.supports_tools),
-                int(model.supports_streaming), model.endpoint,
-                model.max_tokens, model.temperature,
-                model.created_at.isoformat() if model.created_at else None,
-                model.last_used.isoformat() if model.last_used else None,
-                model.total_requests,
-                json.dumps(model.metadata) if model.metadata else None,
-            ))
+            """,
+                (
+                    model.id,
+                    model.name,
+                    model.provider,
+                    model.model_type,
+                    model.status,
+                    model.context_size,
+                    int(model.supports_vision),
+                    int(model.supports_tools),
+                    int(model.supports_streaming),
+                    model.endpoint,
+                    model.max_tokens,
+                    model.temperature,
+                    model.created_at.isoformat() if model.created_at else None,
+                    model.last_used.isoformat() if model.last_used else None,
+                    model.total_requests,
+                    json.dumps(model.metadata) if model.metadata else None,
+                ),
+            )
         logger.debug(f"Saved model: {model.id}")
-    
-    def get_model(self, model_id: str) -> Optional[AIModel]:
+
+    def get_model(self, model_id: str) -> AIModel | None:
         """Get a model from the database.
-        
+
         Args:
             model_id: Model ID.
-            
+
         Returns:
             Model instance or None.
         """
@@ -241,14 +249,14 @@ class StorageService:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM models WHERE id = ?", (model_id,))
             row = cursor.fetchone()
-            
+
         if row:
             return self._row_to_model(row)
         return None
-    
+
     def get_all_models(self) -> list[AIModel]:
         """Get all models from the database.
-        
+
         Returns:
             List of models.
         """
@@ -256,12 +264,12 @@ class StorageService:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM models")
             rows = cursor.fetchall()
-        
+
         return [self._row_to_model(row) for row in rows]
-    
+
     def delete_model(self, model_id: str) -> None:
         """Delete a model from the database.
-        
+
         Args:
             model_id: Model ID.
         """
@@ -269,171 +277,210 @@ class StorageService:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM models WHERE id = ?", (model_id,))
         logger.debug(f"Deleted model: {model_id}")
-    
+
     # Agent operations
-    
+
     def save_agent(self, agent: Agent) -> None:
         """Save an agent to the database."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO agents (
                     id, name, role, status, model_id, system_prompt,
                     tasks_completed, tasks_failed, current_task_id,
                     created_at, last_active, max_concurrent_tasks,
                     priority, metadata
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                agent.id, agent.name, agent.role, agent.status,
-                agent.model_id, agent.system_prompt,
-                agent.tasks_completed, agent.tasks_failed,
-                agent.current_task_id,
-                agent.created_at.isoformat() if agent.created_at else None,
-                agent.last_active.isoformat() if agent.last_active else None,
-                agent.max_concurrent_tasks, agent.priority,
-                json.dumps(agent.metadata) if agent.metadata else None,
-            ))
+            """,
+                (
+                    agent.id,
+                    agent.name,
+                    agent.role,
+                    agent.status,
+                    agent.model_id,
+                    agent.system_prompt,
+                    agent.tasks_completed,
+                    agent.tasks_failed,
+                    agent.current_task_id,
+                    agent.created_at.isoformat() if agent.created_at else None,
+                    agent.last_active.isoformat() if agent.last_active else None,
+                    agent.max_concurrent_tasks,
+                    agent.priority,
+                    json.dumps(agent.metadata) if agent.metadata else None,
+                ),
+            )
         logger.debug(f"Saved agent: {agent.id}")
-    
-    def get_agent(self, agent_id: str) -> Optional[Agent]:
+
+    def get_agent(self, agent_id: str) -> Agent | None:
         """Get an agent from the database."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM agents WHERE id = ?", (agent_id,))
             row = cursor.fetchone()
-        
+
         if row:
             return self._row_to_agent(row)
         return None
-    
+
     def get_all_agents(self) -> list[Agent]:
         """Get all agents from the database."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM agents")
             rows = cursor.fetchall()
-        
+
         return [self._row_to_agent(row) for row in rows]
-    
+
     # Task operations
-    
+
     def save_task(self, task: Task) -> None:
         """Save a task to the database."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO tasks (
                     id, title, description, status, priority, agent_id,
                     created_at, started_at, completed_at, result, error,
                     progress, parent_task_id, tags, metadata,
                     max_retries, retry_count, timeout_seconds
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                task.id, task.title, task.description, task.status,
-                task.priority, task.agent_id,
-                task.created_at.isoformat() if task.created_at else None,
-                task.started_at.isoformat() if task.started_at else None,
-                task.completed_at.isoformat() if task.completed_at else None,
-                task.result, task.error, task.progress,
-                task.parent_task_id,
-                json.dumps(task.tags) if task.tags else None,
-                json.dumps(task.metadata) if task.metadata else None,
-                task.max_retries, task.retry_count, task.timeout_seconds,
-            ))
+            """,
+                (
+                    task.id,
+                    task.title,
+                    task.description,
+                    task.status,
+                    task.priority,
+                    task.agent_id,
+                    task.created_at.isoformat() if task.created_at else None,
+                    task.started_at.isoformat() if task.started_at else None,
+                    task.completed_at.isoformat() if task.completed_at else None,
+                    task.result,
+                    task.error,
+                    task.progress,
+                    task.parent_task_id,
+                    json.dumps(task.tags) if task.tags else None,
+                    json.dumps(task.metadata) if task.metadata else None,
+                    task.max_retries,
+                    task.retry_count,
+                    task.timeout_seconds,
+                ),
+            )
         logger.debug(f"Saved task: {task.id}")
-    
-    def get_task(self, task_id: str) -> Optional[Task]:
+
+    def get_task(self, task_id: str) -> Task | None:
         """Get a task from the database."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
             row = cursor.fetchone()
-        
+
         if row:
             return self._row_to_task(row)
         return None
-    
+
     def get_all_tasks(self) -> list[Task]:
         """Get all tasks from the database."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM tasks")
             rows = cursor.fetchall()
-        
+
         return [self._row_to_task(row) for row in rows]
-    
+
     # Chat operations
-    
+
     def save_chat_session(self, session: ChatSession) -> None:
         """Save a chat session to the database."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO chat_sessions (
                     id, name, model_id, created_at, updated_at,
                     message_count, total_tokens, metadata
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                session.id, session.name, session.model_id,
-                session.created_at.isoformat() if session.created_at else None,
-                session.updated_at.isoformat() if session.updated_at else None,
-                session.message_count, session.total_tokens,
-                json.dumps(session.metadata) if session.metadata else None,
-            ))
-    
+            """,
+                (
+                    session.id,
+                    session.name,
+                    session.model_id,
+                    session.created_at.isoformat() if session.created_at else None,
+                    session.updated_at.isoformat() if session.updated_at else None,
+                    session.message_count,
+                    session.total_tokens,
+                    json.dumps(session.metadata) if session.metadata else None,
+                ),
+            )
+
     def save_chat_message(self, message: ChatMessage) -> int:
         """Save a chat message and return its ID."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO chat_messages (
                     session_id, role, content, model_id, created_at, tokens, metadata
                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (
-                message.session_id, message.role, message.content,
-                message.model_id,
-                message.created_at.isoformat() if message.created_at else None,
-                message.tokens,
-                json.dumps(message.metadata) if message.metadata else None,
-            ))
+            """,
+                (
+                    message.session_id,
+                    message.role,
+                    message.content,
+                    message.model_id,
+                    message.created_at.isoformat() if message.created_at else None,
+                    message.tokens,
+                    json.dumps(message.metadata) if message.metadata else None,
+                ),
+            )
             return cursor.lastrowid or 0
-    
+
     # User operations
-    
+
     def save_user(self, user: User) -> None:
         """Save a user to the database."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO users (
                     id, username, password_hash, salt, role, email,
                     created_at, last_login, login_count, failed_login_attempts,
                     locked_until, preferences, metadata
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                user.id, user.username, user.password_hash, user.salt,
-                user.role, user.email,
-                user.created_at.isoformat() if user.created_at else None,
-                user.last_login.isoformat() if user.last_login else None,
-                user.login_count, user.failed_login_attempts,
-                user.locked_until.isoformat() if user.locked_until else None,
-                json.dumps(user.preferences) if user.preferences else None,
-                json.dumps(user.metadata) if user.metadata else None,
-            ))
-    
-    def get_user_by_username(self, username: str) -> Optional[User]:
+            """,
+                (
+                    user.id,
+                    user.username,
+                    user.password_hash,
+                    user.salt,
+                    user.role,
+                    user.email,
+                    user.created_at.isoformat() if user.created_at else None,
+                    user.last_login.isoformat() if user.last_login else None,
+                    user.login_count,
+                    user.failed_login_attempts,
+                    user.locked_until.isoformat() if user.locked_until else None,
+                    json.dumps(user.preferences) if user.preferences else None,
+                    json.dumps(user.metadata) if user.metadata else None,
+                ),
+            )
+
+    def get_user_by_username(self, username: str) -> User | None:
         """Get a user by username."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
             row = cursor.fetchone()
-        
+
         if row:
             return self._row_to_user(row)
         return None
-    
+
     # Helper methods
-    
+
     def _row_to_model(self, row: sqlite3.Row) -> AIModel:
         """Convert database row to AIModel."""
         return AIModel(
@@ -454,7 +501,7 @@ class StorageService:
             total_requests=row["total_requests"],
             metadata=json.loads(row["metadata"]) if row["metadata"] else {},
         )
-    
+
     def _row_to_agent(self, row: sqlite3.Row) -> Agent:
         """Convert database row to Agent."""
         return Agent(
@@ -473,7 +520,7 @@ class StorageService:
             priority=row["priority"],
             metadata=json.loads(row["metadata"]) if row["metadata"] else {},
         )
-    
+
     def _row_to_task(self, row: sqlite3.Row) -> Task:
         """Convert database row to Task."""
         return Task(
@@ -485,7 +532,9 @@ class StorageService:
             agent_id=row["agent_id"],
             created_at=datetime.fromisoformat(row["created_at"]) if row["created_at"] else None,
             started_at=datetime.fromisoformat(row["started_at"]) if row["started_at"] else None,
-            completed_at=datetime.fromisoformat(row["completed_at"]) if row["completed_at"] else None,
+            completed_at=(
+                datetime.fromisoformat(row["completed_at"]) if row["completed_at"] else None
+            ),
             result=row["result"],
             error=row["error"],
             progress=row["progress"],
@@ -496,7 +545,7 @@ class StorageService:
             retry_count=row["retry_count"],
             timeout_seconds=row["timeout_seconds"],
         )
-    
+
     def _row_to_user(self, row: sqlite3.Row) -> User:
         """Convert database row to User."""
         return User(
@@ -510,7 +559,9 @@ class StorageService:
             last_login=datetime.fromisoformat(row["last_login"]) if row["last_login"] else None,
             login_count=row["login_count"],
             failed_login_attempts=row["failed_login_attempts"],
-            locked_until=datetime.fromisoformat(row["locked_until"]) if row["locked_until"] else None,
+            locked_until=(
+                datetime.fromisoformat(row["locked_until"]) if row["locked_until"] else None
+            ),
             preferences=json.loads(row["preferences"]) if row["preferences"] else {},
             metadata=json.loads(row["metadata"]) if row["metadata"] else {},
         )

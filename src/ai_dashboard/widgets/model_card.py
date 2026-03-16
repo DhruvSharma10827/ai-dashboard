@@ -5,8 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import Button, Static
+from textual.containers import Container
+from textual.containers import Horizontal
+from textual.containers import Vertical
+from textual.widgets import Button
+from textual.widgets import Static
 
 from ai_dashboard.models.ai_model import AIModel
 from ai_dashboard.widgets.status_indicator import StatusIndicator
@@ -17,18 +20,18 @@ if TYPE_CHECKING:
 
 class ModelCard(Container):
     """Widget for displaying an AI model card.
-    
+
     This widget displays model information including name,
     provider, context size, and capabilities.
-    
+
     Attributes:
         model: The AI model to display.
-    
+
     Example:
         >>> model = AIModel(id="gpt-4", name="GPT-4", provider="openai")
         >>> card = ModelCard(model)
     """
-    
+
     DEFAULT_CSS = """
     ModelCard {
         height: auto;
@@ -107,7 +110,7 @@ class ModelCard(Container):
         margin: 0 1 0 0;
     }
     """
-    
+
     def __init__(
         self,
         model: AIModel,
@@ -118,7 +121,7 @@ class ModelCard(Container):
         classes: str | None = None,
     ) -> None:
         """Initialize model card.
-        
+
         Args:
             model: AI model to display.
             show_actions: Whether to show action buttons.
@@ -129,11 +132,11 @@ class ModelCard(Container):
         super().__init__(name=name, id=id, classes=classes)
         self.model = model
         self.show_actions = show_actions
-        
+
         # Add status class
         if model.status:
             self.add_class(model.status)
-    
+
     def compose(self) -> ComposeResult:
         """Compose the model card widget."""
         # Header with name and status
@@ -141,7 +144,7 @@ class ModelCard(Container):
             yield Static(f"🤖 {self.model.name}", classes="model-name")
             with Container(classes="model-status"):
                 yield StatusIndicator(self.model.status)
-        
+
         # Body with info and capabilities
         with Vertical(classes="model-body"):
             # Model info
@@ -150,7 +153,7 @@ class ModelCard(Container):
                 f"Context: {self.model.context_size_display}",
             ]
             yield Static("  |  ".join(info_parts), classes="model-info")
-            
+
             # Capabilities
             caps = self.model.capabilities
             if caps:
@@ -158,7 +161,7 @@ class ModelCard(Container):
                     for cap in caps:
                         icon = {"Vision": "👁️", "Tools": "🔧", "Streaming": "📡"}.get(cap, "✓")
                         yield Static(f"{icon} {cap}", classes="capability")
-        
+
         # Actions (optional)
         if self.show_actions:
             with Horizontal(classes="model-actions"):
@@ -168,7 +171,7 @@ class ModelCard(Container):
                         yield Button("Stop", variant="error", id="stop")
                     else:
                         yield Button("Start", variant="success", id="start")
-    
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press events."""
         # Emit custom events that parent screens can handle

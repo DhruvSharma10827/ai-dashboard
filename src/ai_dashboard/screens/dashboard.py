@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, VerticalScroll
+from textual.containers import Container
+from textual.containers import Horizontal
+from textual.containers import VerticalScroll
 from textual.screen import Screen
-from textual.widgets import Footer, Header, Static
+from textual.widgets import Footer
+from textual.widgets import Header
+from textual.widgets import Static
 
 from ai_dashboard.widgets.agent_card import AgentCard
 from ai_dashboard.widgets.model_card import ModelCard
@@ -20,17 +25,17 @@ if TYPE_CHECKING:
 
 class DashboardScreen(Screen):
     """Main dashboard screen.
-    
+
     This screen displays:
     - Statistics overview
     - Model cards
     - Agent cards
     - System status
-    
+
     Attributes:
         BINDINGS: Keyboard bindings for navigation.
     """
-    
+
     BINDINGS: ClassVar[tuple[Binding, ...]] = (
         Binding("1", "goto_dashboard", "Dashboard"),
         Binding("2", "goto_models", "Models"),
@@ -41,7 +46,7 @@ class DashboardScreen(Screen):
         Binding("r", "refresh", "Refresh"),
         Binding("q", "quit", "Quit"),
     )
-    
+
     DEFAULT_CSS = """
     DashboardScreen {
         layout: vertical;
@@ -98,16 +103,16 @@ class DashboardScreen(Screen):
         margin: 0 2;
     }
     """
-    
+
     @property
-    def app(self) -> "AIDashboardApp":
+    def app(self) -> AIDashboardApp:
         """Get the app instance."""
         return super().app  # type: ignore
-    
+
     def compose(self) -> ComposeResult:
         """Compose the dashboard screen."""
         yield Header()
-        
+
         with Container(classes="dashboard-container"):
             # Statistics row
             with Horizontal(classes="stats-row"):
@@ -132,7 +137,7 @@ class DashboardScreen(Screen):
                     "Tasks",
                     icon="📋",
                 )
-            
+
             # Main content
             with Horizontal(classes="content-row"):
                 # Models panel
@@ -141,47 +146,47 @@ class DashboardScreen(Screen):
                     with VerticalScroll():
                         for model in self.app.model_service.get_all_models()[:5]:
                             yield ModelCard(model)
-                
+
                 # Agents panel
                 with Container(classes="panel"):
                     yield Static("🦾 Agents", classes="panel-title")
                     with VerticalScroll():
                         for agent in self.app.agent_service.get_all_agents():
                             yield AgentCard(agent)
-            
+
             # System status
             with Horizontal(classes="status-bar"):
                 yield Static("📊 System Status:", classes="status-item")
                 yield Static("CPU: ████████░░ 78%", classes="status-item")
                 yield Static("MEM: ██████░░░░ 62%", classes="status-item")
                 yield Static("GPU: ███████░░░ 45%", classes="status-item")
-        
+
         yield Footer()
-    
+
     def action_goto_dashboard(self) -> None:
         """Navigate to dashboard."""
         pass  # Already on dashboard
-    
+
     def action_goto_models(self) -> None:
         """Navigate to models screen."""
         self.app.push_screen("models")
-    
+
     def action_goto_agents(self) -> None:
         """Navigate to agents screen."""
         self.app.push_screen("agents")
-    
+
     def action_goto_chat(self) -> None:
         """Navigate to chat screen."""
         self.app.push_screen("chat")
-    
+
     def action_goto_tasks(self) -> None:
         """Navigate to tasks screen."""
         self.app.push_screen("tasks")
-    
+
     def action_goto_settings(self) -> None:
         """Navigate to settings screen."""
         self.app.push_screen("settings")
-    
+
     def action_refresh(self) -> None:
         """Refresh the dashboard."""
         self.refresh()

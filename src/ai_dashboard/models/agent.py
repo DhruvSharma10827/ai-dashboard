@@ -14,15 +14,15 @@ Example:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 
 class AgentStatus(Enum):
     """Enumeration of possible agent states.
-    
+
     Attributes:
         IDLE: Agent is idle and available.
         RUNNING: Agent is currently running a task.
@@ -30,15 +30,16 @@ class AgentStatus(Enum):
         ERROR: Agent has encountered an error.
         STOPPED: Agent is stopped.
     """
+
     IDLE = "idle"
     RUNNING = "running"
     PAUSED = "paused"
     ERROR = "error"
     STOPPED = "stopped"
-    
+
     def __str__(self) -> str:
         return self.value
-    
+
     @property
     def icon(self) -> str:
         """Get the icon for this status."""
@@ -54,7 +55,7 @@ class AgentStatus(Enum):
 
 class AgentRole(Enum):
     """Enumeration of agent roles.
-    
+
     Attributes:
         CODE: Code generation and review agent.
         RESEARCH: Research and information gathering agent.
@@ -63,16 +64,17 @@ class AgentRole(Enum):
         DATA: Data processing and analysis agent.
         TESTING: Testing and QA agent.
     """
+
     CODE = "code"
     RESEARCH = "research"
     TASK = "task"
     CHAT = "chat"
     DATA = "data"
     TESTING = "testing"
-    
+
     def __str__(self) -> str:
         return self.value
-    
+
     @property
     def icon(self) -> str:
         """Get the icon for this role."""
@@ -85,7 +87,7 @@ class AgentRole(Enum):
             AgentRole.TESTING: "🧪",
         }
         return icons.get(self, "🤖")
-    
+
     @property
     def display_name(self) -> str:
         """Get the display name for this role."""
@@ -103,10 +105,10 @@ class AgentRole(Enum):
 @dataclass
 class Agent:
     """Agent configuration and task tracking.
-    
+
     This class represents an AI agent that can execute tasks
     using a specific AI model with a defined role.
-    
+
     Attributes:
         id: Unique identifier for the agent.
         name: Human-readable agent name.
@@ -122,7 +124,7 @@ class Agent:
         max_concurrent_tasks: Maximum concurrent tasks.
         priority: Agent priority (higher = more important).
         metadata: Additional metadata.
-    
+
     Example:
         >>> agent = Agent(
         ...     id="research-1",
@@ -131,31 +133,32 @@ class Agent:
         ...     model_id="llama3.2",
         ... )
     """
+
     id: str
     name: str
     role: str
     status: str = "idle"
-    model_id: Optional[str] = None
-    system_prompt: Optional[str] = None
+    model_id: str | None = None
+    system_prompt: str | None = None
     tasks_completed: int = 0
     tasks_failed: int = 0
-    current_task_id: Optional[str] = None
-    created_at: Optional[datetime] = None
-    last_active: Optional[datetime] = None
+    current_task_id: str | None = None
+    created_at: datetime | None = None
+    last_active: datetime | None = None
     max_concurrent_tasks: int = 1
     priority: int = 0
     metadata: dict = field(default_factory=dict)
-    
+
     def __post_init__(self) -> None:
         """Initialize default values after creation."""
         if self.created_at is None:
             self.created_at = datetime.now()
-    
+
     @property
     def is_available(self) -> bool:
         """Check if agent is available for new tasks."""
         return self.status == "idle" and self.current_task_id is None
-    
+
     @property
     def success_rate(self) -> float:
         """Calculate the agent's success rate."""
@@ -163,7 +166,7 @@ class Agent:
         if total == 0:
             return 0.0
         return self.tasks_completed / total
-    
+
     @property
     def role_icon(self) -> str:
         """Get the icon for this agent's role."""
@@ -172,20 +175,20 @@ class Agent:
             return role.icon
         except ValueError:
             return "🤖"
-    
+
     def start_task(self, task_id: str) -> None:
         """Mark agent as starting a task.
-        
+
         Args:
             task_id: ID of the task to start.
         """
         self.status = "running"
         self.current_task_id = task_id
         self.last_active = datetime.now()
-    
+
     def complete_task(self, success: bool = True) -> None:
         """Mark task as completed.
-        
+
         Args:
             success: Whether the task was successful.
         """
@@ -196,7 +199,7 @@ class Agent:
         self.status = "idle"
         self.current_task_id = None
         self.last_active = datetime.now()
-    
+
     def to_dict(self) -> dict:
         """Convert agent to dictionary."""
         return {
@@ -215,7 +218,7 @@ class Agent:
             "priority": self.priority,
             "metadata": self.metadata,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> Agent:
         """Create agent from dictionary."""

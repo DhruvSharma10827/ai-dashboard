@@ -13,37 +13,46 @@ Example:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 
 class UserRole(Enum):
     """Enumeration of user roles.
-    
+
     Attributes:
         ADMIN: Administrator with full access.
         USER: Regular user with limited access.
         VIEWER: Read-only access.
     """
+
     ADMIN = "admin"
     USER = "user"
     VIEWER = "viewer"
-    
+
     def __str__(self) -> str:
         return self.value
-    
+
     @property
     def permissions(self) -> list[str]:
         """Get permissions for this role."""
         permissions_map = {
             UserRole.ADMIN: [
-                "read", "write", "delete", "manage_users",
-                "manage_models", "manage_agents", "manage_settings",
+                "read",
+                "write",
+                "delete",
+                "manage_users",
+                "manage_models",
+                "manage_agents",
+                "manage_settings",
             ],
             UserRole.USER: [
-                "read", "write", "manage_models", "manage_agents",
+                "read",
+                "write",
+                "manage_models",
+                "manage_agents",
             ],
             UserRole.VIEWER: ["read"],
         }
@@ -53,10 +62,10 @@ class UserRole(Enum):
 @dataclass
 class User:
     """User account representation.
-    
+
     This class represents a user account with authentication
     and authorization information.
-    
+
     Attributes:
         id: Unique user identifier.
         username: User's login name.
@@ -71,7 +80,7 @@ class User:
         locked_until: Account lockout expiration time.
         preferences: User preferences.
         metadata: Additional metadata.
-    
+
     Example:
         >>> user = User(
         ...     id=1,
@@ -79,43 +88,44 @@ class User:
         ...     role="admin",
         ... )
     """
-    id: Optional[int] = None
+
+    id: int | None = None
     username: str = ""
     password_hash: str = ""
     salt: str = ""
     role: str = "user"
-    email: Optional[str] = None
-    created_at: Optional[datetime] = None
-    last_login: Optional[datetime] = None
+    email: str | None = None
+    created_at: datetime | None = None
+    last_login: datetime | None = None
     login_count: int = 0
     failed_login_attempts: int = 0
-    locked_until: Optional[datetime] = None
+    locked_until: datetime | None = None
     preferences: dict = field(default_factory=dict)
     metadata: dict = field(default_factory=dict)
-    
+
     def __post_init__(self) -> None:
         """Initialize default values after creation."""
         if self.created_at is None:
             self.created_at = datetime.now()
-    
+
     @property
     def is_admin(self) -> bool:
         """Check if user is an admin."""
         return self.role == "admin"
-    
+
     @property
     def is_locked(self) -> bool:
         """Check if account is locked."""
         if self.locked_until is None:
             return False
         return datetime.now() < self.locked_until
-    
+
     def has_permission(self, permission: str) -> bool:
         """Check if user has a specific permission.
-        
+
         Args:
             permission: Permission to check.
-            
+
         Returns:
             True if user has the permission.
         """
@@ -124,10 +134,10 @@ class User:
             return permission in role.permissions
         except ValueError:
             return False
-    
+
     def record_login(self, success: bool) -> None:
         """Record a login attempt.
-        
+
         Args:
             success: Whether the login was successful.
         """
@@ -137,21 +147,22 @@ class User:
             self.failed_login_attempts = 0
         else:
             self.failed_login_attempts += 1
-    
+
     def lock_account(self, minutes: int = 30) -> None:
         """Lock the account for a specified duration.
-        
+
         Args:
             minutes: Lockout duration in minutes.
         """
         from datetime import timedelta
+
         self.locked_until = datetime.now() + timedelta(minutes=minutes)
-    
+
     def unlock_account(self) -> None:
         """Unlock the account."""
         self.locked_until = None
         self.failed_login_attempts = 0
-    
+
     def to_dict(self) -> dict:
         """Convert user to dictionary (excluding sensitive data)."""
         return {
@@ -165,7 +176,7 @@ class User:
             "preferences": self.preferences,
             "metadata": self.metadata,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> User:
         """Create user from dictionary."""

@@ -5,8 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import Button, Static
+from textual.containers import Container
+from textual.containers import Horizontal
+from textual.containers import Vertical
+from textual.widgets import Button
+from textual.widgets import Static
 
 from ai_dashboard.models.agent import Agent
 from ai_dashboard.widgets.status_indicator import StatusIndicator
@@ -17,18 +20,18 @@ if TYPE_CHECKING:
 
 class AgentCard(Container):
     """Widget for displaying an agent card.
-    
+
     This widget displays agent information including name,
     role, status, and task statistics.
-    
+
     Attributes:
         agent: The agent to display.
-    
+
     Example:
         >>> agent = Agent(id="code-1", name="Code Agent", role="code")
         >>> card = AgentCard(agent)
     """
-    
+
     # Role icons mapping
     ROLE_ICONS: dict[str, str] = {
         "code": "💻",
@@ -38,7 +41,7 @@ class AgentCard(Container):
         "data": "📊",
         "testing": "🧪",
     }
-    
+
     DEFAULT_CSS = """
     AgentCard {
         height: auto;
@@ -137,7 +140,7 @@ class AgentCard(Container):
         margin: 0 1 0 0;
     }
     """
-    
+
     def __init__(
         self,
         agent: Agent,
@@ -148,7 +151,7 @@ class AgentCard(Container):
         classes: str | None = None,
     ) -> None:
         """Initialize agent card.
-        
+
         Args:
             agent: Agent to display.
             show_actions: Whether to show action buttons.
@@ -159,15 +162,15 @@ class AgentCard(Container):
         super().__init__(name=name, id=id, classes=classes)
         self.agent = agent
         self.show_actions = show_actions
-        
+
         # Add status class
         if agent.status:
             self.add_class(agent.status)
-    
+
     def compose(self) -> ComposeResult:
         """Compose the agent card widget."""
         icon = self.ROLE_ICONS.get(self.agent.role, "🤖")
-        
+
         # Header with icon, name, and status
         with Horizontal(classes="agent-header"):
             yield Static(icon, classes="agent-icon")
@@ -176,7 +179,7 @@ class AgentCard(Container):
                 yield Static(self.agent.role.title(), classes="agent-role")
             with Container(classes="agent-status"):
                 yield StatusIndicator(self.agent.status)
-        
+
         # Stats row
         with Horizontal(classes="agent-stats"):
             with Container(classes="stat"):
@@ -186,18 +189,20 @@ class AgentCard(Container):
                 yield Static(str(self.agent.tasks_failed), classes="stat-value")
                 yield Static("Failed", classes="stat-label")
             with Container(classes="stat"):
-                success_rate = f"{self.agent.success_rate:.0%}" if self.agent.success_rate > 0 else "N/A"
+                success_rate = (
+                    f"{self.agent.success_rate:.0%}" if self.agent.success_rate > 0 else "N/A"
+                )
                 yield Static(success_rate, classes="stat-value")
                 yield Static("Success", classes="stat-label")
-        
+
         # Model info
         if self.agent.model_id:
             yield Static(f"Model: {self.agent.model_id}", classes="agent-model")
-        
+
         # Current task
         if self.agent.current_task_id:
             yield Static(f"Current: {self.agent.current_task_id}", classes="agent-model")
-        
+
         # Actions (optional)
         if self.show_actions:
             with Horizontal(classes="agent-actions"):
@@ -208,7 +213,7 @@ class AgentCard(Container):
                     yield Button("Resume", variant="success", id="resume")
                 else:
                     yield Button("Start", variant="success", id="start")
-    
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press events."""
         event.stop()

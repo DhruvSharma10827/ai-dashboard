@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal
+from textual.containers import Container
+from textual.containers import Horizontal
 from textual.widgets import Static
 
 from ai_dashboard.models.task import Task
@@ -16,18 +17,18 @@ if TYPE_CHECKING:
 
 class TaskItem(Container):
     """Widget for displaying a task item.
-    
+
     This widget displays task information including title,
     status, priority, and progress.
-    
+
     Attributes:
         task: The task to display.
-    
+
     Example:
         >>> task = Task(id="task-1", title="Analyze code")
         >>> item = TaskItem(task)
     """
-    
+
     # Status icons
     STATUS_ICONS: dict[str, str] = {
         "pending": "⏳",
@@ -38,7 +39,7 @@ class TaskItem(Container):
         "cancelled": "🚫",
         "paused": "⏸️",
     }
-    
+
     # Priority indicators
     PRIORITY_ICONS: dict[str, str] = {
         "low": "🔽",
@@ -46,7 +47,7 @@ class TaskItem(Container):
         "high": "🔼",
         "urgent": "🔴",
     }
-    
+
     DEFAULT_CSS = """
     TaskItem {
         height: auto;
@@ -142,7 +143,7 @@ class TaskItem(Container):
         background: $accent;
     }
     """
-    
+
     def __init__(
         self,
         task: Task,
@@ -153,7 +154,7 @@ class TaskItem(Container):
         classes: str | None = None,
     ) -> None:
         """Initialize task item.
-        
+
         Args:
             task: Task to display.
             show_progress: Whether to show progress bar.
@@ -164,22 +165,22 @@ class TaskItem(Container):
         super().__init__(name=name, id=id, classes=classes)
         self.task = task
         self.show_progress = show_progress
-        
+
         # Add status class
         if task.status:
             self.add_class(task.status)
-    
+
     def compose(self) -> ComposeResult:
         """Compose the task item widget."""
         status_icon = self.STATUS_ICONS.get(self.task.status, "❓")
         priority_icon = self.PRIORITY_ICONS.get(self.task.priority, "➡️")
-        
+
         with Horizontal(classes="task-header"):
             yield Static(status_icon, classes="task-icon")
-            
+
             with Container(classes="task-title-container"):
                 yield Static(self.task.title, classes="task-title")
-                
+
                 # Meta info
                 meta_parts = []
                 if self.task.agent_id:
@@ -189,15 +190,15 @@ class TaskItem(Container):
                     meta_parts.append(f"Duration: {duration}")
                 if meta_parts:
                     yield Static("  |  ".join(meta_parts), classes="task-meta")
-            
+
             yield Static(priority_icon, classes="task-priority")
-            
+
             with Container(classes="task-status-container"):
                 status_text = self.task.status.title()
                 if self.task.progress > 0 and self.task.progress < 100:
                     status_text = f"{status_text} ({self.task.progress}%)"
                 yield Static(status_text, classes="task-status")
-        
+
         # Progress bar for running tasks
         if self.show_progress and self.task.status == "running" and self.task.progress > 0:
             with Container(classes="task-progress"):
@@ -205,30 +206,29 @@ class TaskItem(Container):
                 progress_chars = int(self.task.progress / 10)
                 bar = "█" * progress_chars + "░" * (10 - progress_chars)
                 yield Static(bar, classes="task-progress-bar")
-    
+
     def _format_duration(self, seconds: float) -> str:
         """Format duration in seconds to human readable.
-        
+
         Args:
             seconds: Duration in seconds.
-            
+
         Returns:
             Formatted duration string.
         """
         if seconds < 60:
             return f"{int(seconds)}s"
-        elif seconds < 3600:
+        if seconds < 3600:
             minutes = int(seconds / 60)
             secs = int(seconds % 60)
             return f"{minutes}m {secs}s"
-        else:
-            hours = int(seconds / 3600)
-            minutes = int((seconds % 3600) / 60)
-            return f"{hours}h {minutes}m"
-    
+        hours = int(seconds / 3600)
+        minutes = int((seconds % 3600) / 60)
+        return f"{hours}h {minutes}m"
+
     def update_progress(self, progress: int) -> None:
         """Update task progress.
-        
+
         Args:
             progress: New progress value (0-100).
         """

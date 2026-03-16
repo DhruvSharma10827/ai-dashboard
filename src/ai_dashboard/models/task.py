@@ -14,15 +14,16 @@ Example:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class TaskStatus(Enum):
     """Enumeration of possible task states.
-    
+
     Attributes:
         PENDING: Task is pending execution.
         QUEUED: Task is queued for execution.
@@ -32,6 +33,7 @@ class TaskStatus(Enum):
         CANCELLED: Task was cancelled.
         PAUSED: Task is paused.
     """
+
     PENDING = "pending"
     QUEUED = "queued"
     RUNNING = "running"
@@ -39,10 +41,10 @@ class TaskStatus(Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
     PAUSED = "paused"
-    
+
     def __str__(self) -> str:
         return self.value
-    
+
     @property
     def icon(self) -> str:
         """Get the icon for this status."""
@@ -56,7 +58,7 @@ class TaskStatus(Enum):
             TaskStatus.PAUSED: "⏸️",
         }
         return icons.get(self, "❓")
-    
+
     @property
     def is_terminal(self) -> bool:
         """Check if this is a terminal state."""
@@ -65,21 +67,22 @@ class TaskStatus(Enum):
 
 class TaskPriority(Enum):
     """Enumeration of task priorities.
-    
+
     Attributes:
         LOW: Low priority task.
         NORMAL: Normal priority task.
         HIGH: High priority task.
         URGENT: Urgent priority task.
     """
+
     LOW = 0
     NORMAL = 1
     HIGH = 2
     URGENT = 3
-    
+
     def __str__(self) -> str:
         return self.name.lower()
-    
+
     @property
     def icon(self) -> str:
         """Get the icon for this priority."""
@@ -95,10 +98,10 @@ class TaskPriority(Enum):
 @dataclass
 class Task:
     """Task definition and status tracking.
-    
+
     This class represents a task that can be executed by an agent,
     including its status, timing, and result information.
-    
+
     Attributes:
         id: Unique identifier for the task.
         title: Short title for the task.
@@ -118,7 +121,7 @@ class Task:
         max_retries: Maximum retry attempts.
         retry_count: Current retry count.
         timeout_seconds: Task timeout in seconds.
-    
+
     Example:
         >>> task = Task(
         ...     id="task-001",
@@ -127,54 +130,52 @@ class Task:
         ...     priority="high",
         ... )
     """
+
     id: str
     title: str
     description: str = ""
     status: str = "pending"
     priority: str = "normal"
-    agent_id: Optional[str] = None
-    created_at: Optional[datetime] = None
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    result: Optional[str] = None
-    error: Optional[str] = None
+    agent_id: str | None = None
+    created_at: datetime | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    result: str | None = None
+    error: str | None = None
     progress: int = 0
-    parent_task_id: Optional[str] = None
+    parent_task_id: str | None = None
     tags: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
     max_retries: int = 3
     retry_count: int = 0
     timeout_seconds: int = 300
-    
+
     def __post_init__(self) -> None:
         """Initialize default values after creation."""
         if self.created_at is None:
             self.created_at = datetime.now()
-    
+
     @property
-    def duration_seconds(self) -> Optional[float]:
+    def duration_seconds(self) -> float | None:
         """Calculate task duration in seconds."""
         if self.started_at is None:
             return None
         end_time = self.completed_at or datetime.now()
         return (end_time - self.started_at).total_seconds()
-    
+
     @property
     def is_complete(self) -> bool:
         """Check if task is in a terminal state."""
         return self.status in ("completed", "failed", "cancelled")
-    
+
     @property
     def can_retry(self) -> bool:
         """Check if task can be retried."""
-        return (
-            self.status == "failed"
-            and self.retry_count < self.max_retries
-        )
-    
-    def start(self, agent_id: Optional[str] = None) -> None:
+        return self.status == "failed" and self.retry_count < self.max_retries
+
+    def start(self, agent_id: str | None = None) -> None:
         """Mark task as started.
-        
+
         Args:
             agent_id: ID of the agent starting the task.
         """
@@ -182,10 +183,10 @@ class Task:
         self.started_at = datetime.now()
         if agent_id:
             self.agent_id = agent_id
-    
-    def complete(self, result: Optional[str] = None) -> None:
+
+    def complete(self, result: str | None = None) -> None:
         """Mark task as completed.
-        
+
         Args:
             result: Task result.
         """
@@ -194,25 +195,25 @@ class Task:
         self.progress = 100
         if result:
             self.result = result
-    
+
     def fail(self, error: str) -> None:
         """Mark task as failed.
-        
+
         Args:
             error: Error message.
         """
         self.status = "failed"
         self.completed_at = datetime.now()
         self.error = error
-    
+
     def cancel(self) -> None:
         """Cancel the task."""
         self.status = "cancelled"
         self.completed_at = datetime.now()
-    
-    def update_progress(self, progress: int, message: Optional[str] = None) -> None:
+
+    def update_progress(self, progress: int, message: str | None = None) -> None:
         """Update task progress.
-        
+
         Args:
             progress: Progress percentage (0-100).
             message: Optional progress message.
@@ -220,7 +221,7 @@ class Task:
         self.progress = max(0, min(100, progress))
         if message:
             self.metadata["progress_message"] = message
-    
+
     def to_dict(self) -> dict:
         """Convert task to dictionary."""
         return {
@@ -243,7 +244,7 @@ class Task:
             "retry_count": self.retry_count,
             "timeout_seconds": self.timeout_seconds,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> Task:
         """Create task from dictionary."""

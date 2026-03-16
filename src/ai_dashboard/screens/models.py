@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, VerticalScroll
+from textual.containers import Container
+from textual.containers import VerticalScroll
 from textual.screen import Screen
-from textual.widgets import Footer, Header, Static, TabbedContent, TabPane
+from textual.widgets import Footer
+from textual.widgets import Header
+from textual.widgets import TabbedContent
+from textual.widgets import TabPane
 
 from ai_dashboard.widgets.model_card import ModelCard
 
@@ -18,7 +23,7 @@ if TYPE_CHECKING:
 
 class ModelsScreen(Screen):
     """AI Models management screen."""
-    
+
     BINDINGS: ClassVar[tuple[Binding, ...]] = (
         Binding("escape", "go_back", "Back"),
         Binding("r", "refresh", "Refresh"),
@@ -29,18 +34,18 @@ class ModelsScreen(Screen):
         Binding("5", "goto_tasks", "Tasks"),
         Binding("6", "goto_settings", "Settings"),
     )
-    
+
     DEFAULT_CSS = """
     ModelsScreen { layout: vertical; height: 100%; }
     ModelsScreen .container { padding: 1 2; height: 1fr; }
     ModelsScreen .section { margin: 1 0; }
     ModelsScreen .section-title { text-style: bold; color: $accent; margin-bottom: 1; }
     """
-    
+
     @property
-    def app(self) -> "AIDashboardApp":
+    def app(self) -> AIDashboardApp:
         return super().app  # type: ignore
-    
+
     def compose(self) -> ComposeResult:
         yield Header()
         with Container(classes="container"):
@@ -55,27 +60,27 @@ class ModelsScreen(Screen):
                             if not model.is_local:
                                 yield ModelCard(model, show_actions=True)
         yield Footer()
-    
+
     def action_go_back(self) -> None:
         self.app.pop_screen()
-    
+
     def action_goto_dashboard(self) -> None:
         self.app.push_screen("dashboard")
-    
+
     def action_goto_models(self) -> None:
         pass
-    
+
     def action_goto_agents(self) -> None:
         self.app.push_screen("agents")
-    
+
     def action_goto_chat(self) -> None:
         self.app.push_screen("chat")
-    
+
     def action_goto_tasks(self) -> None:
         self.app.push_screen("tasks")
-    
+
     def action_goto_settings(self) -> None:
         self.app.push_screen("settings")
-    
+
     def action_refresh(self) -> None:
         self.refresh()
