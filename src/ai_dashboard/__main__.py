@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-"""Main entry point for AI Dashboard TUI application.
+"""CLI entry point for AI Dashboard when run as a module.
 
-Run with:
+Usage:
     python -m ai_dashboard
-    or
-    ai-dashboard (if installed)
 """
 
 from ai_dashboard.app import main

@@ -61,7 +61,6 @@ jobs:
 
   # ===========================================================================
   # BUILD WINDOWS EXECUTABLE
-  # NOTE: TUI apps require a console, so we do NOT use --windowed flag
   # ===========================================================================
   build-windows:
     name: Build Windows
@@ -80,30 +79,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e .
-          pip install textual rich argon2-cffi httpx aiohttp pydantic pyinstaller
+          pip install -e .[dev]
+          pip install pyinstaller textual rich argon2-cffi httpx aiohttp pydantic cryptography
 
-      - name: Build Windows executable
+      - name: Build Windows executable with spec file
         run: |
-          pyinstaller --onefile --console `
-            --name ai-dashboard `
-            --paths src `
-            --hidden-import=textual `
-            --hidden-import=rich `
-            --hidden-import=argon2 `
-            --hidden-import=argon2_cffi `
-            --hidden-import=ai_dashboard `
-            --hidden-import=ai_dashboard.app `
-            --hidden-import=ai_dashboard.core `
-            --hidden-import=ai_dashboard.screens `
-            --hidden-import=ai_dashboard.services `
-            --hidden-import=ai_dashboard.widgets `
-            --hidden-import=ai_dashboard.models `
-            --hidden-import=ai_dashboard.styles `
-            --collect-all textual `
-            --collect-all rich `
-            --collect-all argon2_cffi `
-            dashboard.py
+          pyinstaller ai-dashboard.spec --noconfirm
         shell: pwsh
 
       - name: Test Windows executable
@@ -145,43 +126,25 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e .
-          pip install textual rich argon2-cffi httpx aiohttp pydantic pyinstaller
+          pip install -e .[dev]
+          pip install pyinstaller textual rich argon2-cffi httpx aiohttp pydantic cryptography
 
-      - name: Build Linux executable
+      - name: Build Linux executable with spec file
         run: |
-          pyinstaller --onefile \
-            --name ai-dashboard-linux \
-            --paths src \
-            --hidden-import=textual \
-            --hidden-import=rich \
-            --hidden-import=argon2 \
-            --hidden-import=argon2_cffi \
-            --hidden-import=ai_dashboard \
-            --hidden-import=ai_dashboard.app \
-            --hidden-import=ai_dashboard.core \
-            --hidden-import=ai_dashboard.screens \
-            --hidden-import=ai_dashboard.services \
-            --hidden-import=ai_dashboard.widgets \
-            --hidden-import=ai_dashboard.models \
-            --hidden-import=ai_dashboard.styles \
-            --collect-all textual \
-            --collect-all rich \
-            --collect-all argon2_cffi \
-            dashboard.py
+          pyinstaller ai-dashboard.spec --noconfirm
 
       - name: Test Linux executable
         run: |
           echo "Testing Linux executable..."
-          chmod +x dist/ai-dashboard-linux
-          timeout 5s ./dist/ai-dashboard-linux --help || echo "✅ Linux executable test completed"
+          chmod +x dist/ai-dashboard
+          timeout 5s ./dist/ai-dashboard --help || echo "✅ Linux executable test completed"
         continue-on-error: true
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
           name: ai-dashboard-linux
-          path: dist/ai-dashboard-linux
+          path: dist/ai-dashboard
           retention-days: 30
 
   # ===========================================================================
@@ -204,43 +167,25 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e .
-          pip install textual rich argon2-cffi httpx aiohttp pydantic pyinstaller
+          pip install -e .[dev]
+          pip install pyinstaller textual rich argon2-cffi httpx aiohttp pydantic cryptography
 
-      - name: Build macOS executable
+      - name: Build macOS executable with spec file
         run: |
-          pyinstaller --onefile \
-            --name ai-dashboard-macos \
-            --paths src \
-            --hidden-import=textual \
-            --hidden-import=rich \
-            --hidden-import=argon2 \
-            --hidden-import=argon2_cffi \
-            --hidden-import=ai_dashboard \
-            --hidden-import=ai_dashboard.app \
-            --hidden-import=ai_dashboard.core \
-            --hidden-import=ai_dashboard.screens \
-            --hidden-import=ai_dashboard.services \
-            --hidden-import=ai_dashboard.widgets \
-            --hidden-import=ai_dashboard.models \
-            --hidden-import=ai_dashboard.styles \
-            --collect-all textual \
-            --collect-all rich \
-            --collect-all argon2_cffi \
-            dashboard.py
+          pyinstaller ai-dashboard.spec --noconfirm
 
       - name: Test macOS executable
         run: |
           echo "Testing macOS executable..."
-          chmod +x dist/ai-dashboard-macos
-          timeout 5s ./dist/ai-dashboard-macos --help || echo "✅ macOS executable test completed"
+          chmod +x dist/ai-dashboard
+          timeout 5s ./dist/ai-dashboard --help || echo "✅ macOS executable test completed"
         continue-on-error: true
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: ai-dashboard-macos
-          path: dist/ai-dashboard-macos
+          path: dist/ai-dashboard
           retention-days: 30
 
   # ===========================================================================
@@ -265,9 +210,9 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release
-          cp artifacts/ai-dashboard-linux/ai-dashboard-linux release/ 2>/dev/null || true
-          cp artifacts/ai-dashboard-windows/ai-dashboard.exe release/ 2>/dev/null || true
-          cp artifacts/ai-dashboard-macos/ai-dashboard-macos release/ 2>/dev/null || true
+          cp artifacts/ai-dashboard-linux/ai-dashboard release/ai-dashboard-linux 2>/dev/null || true
+          cp artifacts/ai-dashboard-windows/ai-dashboard.exe release/ai-dashboard-windows.exe 2>/dev/null || true
+          cp artifacts/ai-dashboard-macos/ai-dashboard release/ai-dashboard-macos 2>/dev/null || true
           cd release && sha256sum * > checksums.txt 2>/dev/null || true
 
       - name: Create GitHub Release
