@@ -11,6 +11,22 @@ Usage:
     ai-dashboard (if installed via pip)
 """
 
+import sys
+from pathlib import Path
+
+# Handle both development and PyInstaller frozen modes
+if getattr(sys, "frozen", False):
+    # Running as compiled executable
+    bundle_dir = Path(sys._MEIPASS)  # type: ignore
+    src_path = bundle_dir / "src"
+    if src_path.exists():
+        sys.path.insert(0, str(src_path))
+else:
+    # Running in development mode
+    src_path = Path(__file__).parent / "src"
+    if src_path.exists():
+        sys.path.insert(0, str(src_path.parent))
+
 from ai_dashboard.app import main
 
 if __name__ == "__main__":
